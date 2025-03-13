@@ -1,0 +1,64 @@
+dolphin-mcp-toolbox/
+├── backend/                      # Python backend
+│   ├── __init__.py
+│   ├── main.py                   # FastAPI entry point
+│   ├── config.py                 # Configuration management
+│   ├── models/                   # Data models
+│   │   ├── __init__.py
+│   │   ├── tool.py               # Tool configuration model
+│   │   └── user.py               # User preferences
+│   ├── services/                 # Business logic
+│   │   ├── __init__.py
+│   │   ├── mcp_service.py        # MCP interaction service
+│   │   ├── ollama_service.py     # Ollama provider
+│   │   └── tool_service.py       # Tool management
+│   ├── routes/                   # API endpoints
+│   │   ├── __init__.py
+│   │   ├── tools.py              # Tool CRUD endpoints
+│   │   └── llm.py                # LLM interaction endpoints
+│   └── utils/                    # Utility functions
+│       ├── __init__.py
+│       └── logging.py            # Logging utilities
+├── frontend/                     # React frontend
+│   ├── public/
+│   │   ├── index.html
+│   │   └── assets/               # Static assets, icons, etc.
+│   ├── src/
+│   │   ├── main.tsx              # Entry point
+│   │   ├── App.tsx               # Main application component
+│   │   ├── components/           # Reusable UI components
+│   │   │   ├── layout/           # Layout components
+│   │   │   │   ├── Header.tsx
+│   │   │   │   ├── Sidebar.tsx
+│   │   │   │   └── Workspace.tsx
+│   │   │   ├── tools/            # Tool-related components
+│   │   │   │   ├── ToolCard.tsx
+│   │   │   │   ├── ToolEditor.tsx
+│   │   │   │   └── ToolList.tsx
+│   │   │   └── common/           # Common UI elements
+│   │   │       ├── Button.tsx
+│   │   │       ├── Card.tsx
+│   │   │       └── Input.tsx
+│   │   ├── pages/                # Page components
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── ToolBuilder.tsx
+│   │   │   └── Settings.tsx
+│   │   ├── hooks/                # Custom React hooks
+│   │   │   ├── useApi.ts
+│   │   │   └── useTools.ts
+│   │   ├── utils/                # Utility functions
+│   │   │   ├── api.ts            # API client
+│   │   │   └── helpers.ts        # Helper functions
+│   │   ├── context/              # React context providers
+│   │   │   └── ToolContext.tsx
+│   │   └── types/                # TypeScript type definitions
+│   │       └── index.ts
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── tailwind.config.js
+├── scripts/                      # Utility scripts
+│   ├── setup.py                  # Setup script
+│   └── build.py                  # Build script
+├── README.md
+├── requirements.txt              # Python dependencies
+└── .env.example                  # Example environment variables
