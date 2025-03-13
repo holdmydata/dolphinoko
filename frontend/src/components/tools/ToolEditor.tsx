@@ -1,35 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { Tool } from '../../context/ToolContext';
+import React, { useState, useEffect } from "react";
+import { Tool } from "../../context/ToolContext";
 
 interface ToolEditorProps {
   tool: Tool;
   onSave: (tool: Tool) => void;
   onCancel: () => void;
   categories: string[];
-  categoriesMap: Array<{ name: string, subcategories: string[] }>;
+  categoriesMap: Array<{ name: string; subcategories: string[] }>;
 }
 
-const ToolEditor: React.FC<ToolEditorProps> = ({ 
-  tool, 
-  onSave, 
+const ToolEditor: React.FC<ToolEditorProps> = ({
+  tool,
+  onSave,
   onCancel,
   categories,
-  categoriesMap
+  categoriesMap,
 }) => {
   const [editedTool, setEditedTool] = useState<Tool>({ ...tool });
-  const [availableSubcategories, setAvailableSubcategories] = useState<string[]>([]);
+  const [availableSubcategories, setAvailableSubcategories] = useState<
+    string[]
+  >([]);
   const [customCategory, setCustomCategory] = useState(false);
   const [customSubcategory, setCustomSubcategory] = useState(false);
+
+  // Update editedTool when the tool prop changes
+  useEffect(() => {
+    setEditedTool({ ...tool });
+  }, [tool]);
 
   // Update available subcategories when category changes
   useEffect(() => {
     if (editedTool.category) {
-      const categoryData = categoriesMap.find(c => c.name === editedTool.category);
+      const categoryData = categoriesMap.find(
+        (c) => c.name === editedTool.category
+      );
       setAvailableSubcategories(categoryData?.subcategories || []);
-      
+
       // If the current subcategory isn't in the list and not empty, assume it's custom
-      if (editedTool.subcategory && 
-          !categoryData?.subcategories.includes(editedTool.subcategory)) {
+      if (
+        editedTool.subcategory &&
+        !categoryData?.subcategories.includes(editedTool.subcategory)
+      ) {
         setCustomSubcategory(true);
       } else {
         setCustomSubcategory(false);
@@ -41,35 +52,41 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
 
   // Check if category is custom when tool loads
   useEffect(() => {
-    setCustomCategory(!categories.includes(editedTool.category) && !!editedTool.category);
+    setCustomCategory(
+      !categories.includes(editedTool.category) && !!editedTool.category
+    );
   }, [editedTool.category, categories]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    
+
     // If changing category, reset subcategory
-    if (name === 'category' && value !== editedTool.category) {
-      setEditedTool(prev => ({
+    if (name === "category" && value !== editedTool.category) {
+      setEditedTool((prev) => ({
         ...prev,
         [name]: value,
-        subcategory: ''
+        subcategory: "",
       }));
     } else {
-      setEditedTool(prev => ({
+      setEditedTool((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
 
   const handleParameterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setEditedTool(prev => ({
+    setEditedTool((prev) => ({
       ...prev,
       parameters: {
         ...prev.parameters,
-        [name]: name === 'max_tokens' ? parseInt(value) : parseFloat(value)
-      }
+        [name]: name === "max_tokens" ? parseInt(value) : parseFloat(value),
+      },
     }));
   };
 
@@ -82,7 +99,9 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Name
+          </label>
           <input
             type="text"
             name="name"
@@ -93,9 +112,11 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
             placeholder="Tool name"
           />
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Description
+          </label>
           <textarea
             name="description"
             value={editedTool.description}
@@ -105,10 +126,12 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
             placeholder="Short description of what this tool does"
           />
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Category
+            </label>
             <div className="flex items-center space-x-2">
               {!customCategory ? (
                 <select
@@ -118,8 +141,10 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select a category</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
                   ))}
                 </select>
               ) : (
@@ -137,18 +162,20 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                 onClick={() => {
                   setCustomCategory(!customCategory);
                   if (customCategory) {
-                    setEditedTool(prev => ({ ...prev, category: '' }));
+                    setEditedTool((prev) => ({ ...prev, category: "" }));
                   }
                 }}
                 className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md"
               >
-                {customCategory ? 'Select' : 'Custom'}
+                {customCategory ? "Select" : "Custom"}
               </button>
             </div>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Subcategory
+            </label>
             <div className="flex items-center space-x-2">
               {!customSubcategory ? (
                 <select
@@ -156,11 +183,15 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   value={editedTool.subcategory}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={!editedTool.category || availableSubcategories.length === 0}
+                  disabled={
+                    !editedTool.category || availableSubcategories.length === 0
+                  }
                 >
                   <option value="">Select a subcategory</option>
-                  {availableSubcategories.map(subcat => (
-                    <option key={subcat} value={subcat}>{subcat}</option>
+                  {availableSubcategories.map((subcat) => (
+                    <option key={subcat} value={subcat}>
+                      {subcat}
+                    </option>
                   ))}
                 </select>
               ) : (
@@ -179,21 +210,23 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                 onClick={() => {
                   setCustomSubcategory(!customSubcategory);
                   if (customSubcategory) {
-                    setEditedTool(prev => ({ ...prev, subcategory: '' }));
+                    setEditedTool((prev) => ({ ...prev, subcategory: "" }));
                   }
                 }}
                 className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md"
                 disabled={!editedTool.category}
               >
-                {customSubcategory ? 'Select' : 'Custom'}
+                {customSubcategory ? "Select" : "Custom"}
               </button>
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Provider
+            </label>
             <select
               name="provider"
               value={editedTool.provider}
@@ -205,9 +238,11 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               <option value="anthropic">Anthropic</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Model
+            </label>
             <input
               type="text"
               name="model"
@@ -219,9 +254,11 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
             />
           </div>
         </div>
-        
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Prompt Template</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Prompt Template
+          </label>
           <div className="relative">
             <textarea
               name="prompt_template"
@@ -234,15 +271,16 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
             />
             <div className="absolute bottom-2 right-2">
               <div className="bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded">
-                Use {'{input}'} for single value or {'{input.field}'} for structured input
+                Use {"{input}"} for single value or {"{input.field}"} for
+                structured input
               </div>
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Temperature
               <span className="ml-1 text-gray-400">(0-1)</span>
             </label>
@@ -257,7 +295,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Max Tokens
@@ -275,7 +313,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
           </div>
         </div>
       </div>
-      
+
       <div className="pt-4 border-t border-gray-200 flex justify-end space-x-3">
         <button
           type="button"

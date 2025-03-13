@@ -252,5 +252,21 @@
     },
     "created_at": "2025-03-14T10:30:00Z",
     "updated_at": "2025-03-14T10:30:00Z"
-  }
+  },
+  {
+    "id": "2b5e8f93-c7d4-5f92-0a61-3e8d9c2317f4g",
+    "name": "Product Patch Announcement Tool",
+    "category": "Content Creation",
+    "subcategory": "Social Media Management",
+    "provider": "ollama",
+    "model": "dolphin3:latest",
+    "description": "A tool designed to simplify the process of creating and posting announcements on X/Twitter for new products or patches.",
+    "prompt_template": "Create a product announcement for the following product or patch:\n\nProduct/Patch Name: {input.name}\nDescription: {input.description}\nKey Features: {input.features}\nRelease Date: {input.date}\n\nProvide a draft announcement suitable for posting on X/Twitter.",
+    "parameters": {
+        "temperature": 0.2,
+        "max_tokens": 1500
+      },
+      "created_at": "2025-03-14T10:30:00Z",
+      "updated_at": "2025-03-14T10:30:00Z"
+    }
 ]
