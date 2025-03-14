@@ -18,7 +18,7 @@ My take on a user-friendly UI for building and using LLM-powered tools via the D
 - [Ollama](https://ollama.ai/) for local model inference
 - [dolphin-mcp](https://github.com/cognitivecomputations/dolphin-mcp) (installed automatically)
 
-## !! NOTICE:
+## ⚠️ NOTICE:
 Literally following the advice to "Just ship it." This is AS IS, but shouldn't break anything by itself. NO responsibility for any damage, loss, or anything else. Use at your own risk. I'm scared myself. :D
 
 Lots of bugs and issues, but I'm working on it. If you want to help, please do! Primary next steps will be:
@@ -27,6 +27,34 @@ Lots of bugs and issues, but I'm working on it. If you want to help, please do! 
 - Better error handling
 - Tool management improvements including fixes to category
 - Neo4J integration for tool storage
+
+## Version 1.1.0 (3/14/2025)
+
+### 🌓 Dark Mode
+- Added full dark mode support across the application
+- Implemented theme toggle in settings menu
+- Automatically respects system theme preferences
+
+### 💬 Enhanced Chat Experience
+- Hopefully fixed tool execution directly within chat interface
+- Improved message rendering and formatting
+- Added message QoL improvements
+
+### 📊 Metrics & Analytics
+- Implemented comprehensive usage metrics
+- Added dashboard for tracking conversation statistics
+- Improved performance monitoring and reporting
+
+### 🧰 Other Improvements
+- Enhanced error handling and reporting
+- Fixed various UI/UX inconsistencies
+- Improved mobile responsiveness
+- General performance optimizations
+
+### 🐞 Bug Fixes
+- Resolved issues with message persistence
+- Fixed layout problems in conversation history
+- Addressed memory leaks in long-running sessions
 
 ## 🔧 Installation
 
