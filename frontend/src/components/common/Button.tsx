@@ -1,4 +1,5 @@
 import React from 'react';
+import { styles, cx } from '../../utils/theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'success' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -26,17 +27,7 @@ const Button: React.FC<ButtonProps> = ({
   ...rest
 }) => {
   // Base styles
-  const baseStyles = 'font-medium rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-  
-  // Variant styles
-  const variantStyles = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500',
-    secondary: 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500',
-    outline: 'border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 focus:ring-blue-500',
-    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
-    success: 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500',
-    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500',
-  };
+  const baseStyles = 'font-medium rounded transition-colors duration-200 focus:outline-none';
   
   // Size styles
   const sizeStyles = {
@@ -49,21 +40,19 @@ const Button: React.FC<ButtonProps> = ({
   const widthStyles = fullWidth ? 'w-full' : '';
   
   // Disabled styles
-  const disabledStyles = (disabled || isLoading) 
-    ? 'opacity-60 cursor-not-allowed' 
-    : '';
+  const disabledStyles = (disabled || isLoading) ? styles.button.disabled : '';
 
   return (
     <button
-      className={`
-        ${baseStyles} 
-        ${variantStyles[variant]} 
-        ${sizeStyles[size]} 
-        ${widthStyles}
-        ${disabledStyles}
-        ${className}
-        flex items-center justify-center
-      `}
+      className={cx(
+        baseStyles,
+        styles.button[variant],
+        sizeStyles[size],
+        widthStyles,
+        disabledStyles,
+        'flex items-center justify-center',
+        className
+      )}
       disabled={disabled || isLoading}
       {...rest}
     >

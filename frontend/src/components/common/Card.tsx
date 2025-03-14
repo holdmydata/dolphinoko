@@ -1,4 +1,5 @@
 import React from 'react';
+import { styles, cx } from '../../utils/theme';
 
 interface CardProps {
   children: React.ReactNode;
@@ -23,45 +24,27 @@ const Card: React.FC<CardProps> = ({
   noPadding = false,
   border = true,
 }) => {
-  // Base styles
-  const baseStyles = `
-    bg-white rounded-lg shadow-md overflow-hidden
-    ${border ? 'border border-gray-200' : ''}
-    ${className}
-  `;
+  // Base styles with border option
+  const baseStyles = cx(
+    styles.card.container,
+    !border && 'border-0',
+    className
+  );
   
-  // Header styles
-  const headerStyles = `
-    px-6 py-4 border-b border-gray-200
-    ${headerClassName}
-  `;
-  
-  // Body styles
-  const bodyStyles = `
-    ${noPadding ? '' : 'p-6'}
-    ${bodyClassName}
-  `;
-  
-  // Footer styles
-  const footerStyles = `
-    px-6 py-4 bg-gray-50 border-t border-gray-200
-    ${footerClassName}
-  `;
-
   return (
     <div className={baseStyles}>
       {title && (
-        <div className={headerStyles}>
-          <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+        <div className={cx(styles.card.header, headerClassName)}>
+          <h3 className={styles.text.primary + " text-lg font-medium"}>{title}</h3>
         </div>
       )}
       
-      <div className={bodyStyles}>
+      <div className={cx(noPadding ? '' : 'p-6', bodyClassName)}>
         {children}
       </div>
       
       {footer && (
-        <div className={footerStyles}>
+        <div className={cx(styles.card.footer, footerClassName)}>
           {footer}
         </div>
       )}

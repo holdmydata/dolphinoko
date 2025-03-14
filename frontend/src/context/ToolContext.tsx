@@ -1,20 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { api } from "../utils/api";
-import { useTools } from '../hooks/useTools';
 
 // Define types
 export interface Tool {
   id?: string;
   name: string;
   description: string;
-  category: string;
-  subcategory: string;
+  category?: string;
+  subcategory?: string;
   provider: string;
   model: string;
   prompt_template: string;
   parameters: {
-    temperature?: number;
-    max_tokens?: number;
+    temperature: number;
+    max_tokens: number;
     [key: string]: any;
   };
   created_at?: string;
@@ -50,7 +49,7 @@ interface ToolContextType {
   deleteTool: (id: string) => Promise<void>;
   runTool: (request: LLMRequest) => Promise<LLMResponse>;
 }
-
+export type ToolContext = ToolContextType;
 export const ToolContext = createContext<ToolContextType | undefined>(undefined);
 
 export const ToolProvider: React.FC<{ children: React.ReactNode }> = ({

@@ -109,14 +109,14 @@ const ToolBuilder: React.FC = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Header with search and filters */}
-      <div className="bg-white p-4 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Tool Builder</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tool Builder</h1>
           <div className="flex space-x-2">
             <input
               type="text"
               placeholder="Search tools..."
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -126,7 +126,7 @@ const ToolBuilder: React.FC = () => {
                 setCategoryFilter(null);
                 setSubcategoryFilter(null);
               }}
-              className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md transition-colors duration-200"
+              className="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md transition-colors duration-200"
             >
               Reset
             </button>
@@ -135,15 +135,15 @@ const ToolBuilder: React.FC = () => {
         
         {/* Category quick filters */}
         <div className="flex flex-wrap gap-2 mb-2">
-          <span className="text-sm font-medium text-gray-500">Categories:</span>
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Categories:</span>
           {CATEGORIES.map(category => (
             <button
               key={category.name}
               onClick={() => setCategoryFilter(categoryFilter === category.name ? null : category.name)}
               className={`px-2 py-1 text-sm rounded-md transition-colors duration-200 ${
                 categoryFilter === category.name 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-100 hover:bg-gray-200'
+                  ? 'bg-gray-500 text-white' 
+                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200'
               }`}
             >
               {category.name}
@@ -154,15 +154,15 @@ const ToolBuilder: React.FC = () => {
         {/* Subcategory filters - only show when a category is selected */}
         {categoryFilter && (
           <div className="flex flex-wrap gap-2">
-            <span className="text-sm font-medium text-gray-500">Subcategories:</span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Subcategories:</span>
             {availableSubcategories.map(subcat => (
               <button
                 key={subcat}
                 onClick={() => setSubcategoryFilter(subcategoryFilter === subcat ? null : subcat)}
                 className={`px-2 py-1 text-sm rounded-md transition-colors duration-200 ${
                   subcategoryFilter === subcat 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-gray-100 hover:bg-gray-200'
+                    ? 'bg-gray-500 text-white' 
+                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200'
                 }`}
               >
                 {subcat}
@@ -174,25 +174,25 @@ const ToolBuilder: React.FC = () => {
       
       <div className="flex flex-1 h-full overflow-hidden">
         {/* Tool List Sidebar */}
-        <div className="w-64 h-full bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-4 border-b border-gray-200">
+        <div className="w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => {
                 setSelectedTool(null);
                 setIsCreating(true);
               }}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition-colors duration-200"
+              className="w-full bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 text-white py-2 px-4 rounded transition-colors duration-200"
             >
               Create New Tool
             </button>
           </div>
           
           {loading ? (
-            <div className="p-4 text-center">Loading...</div>
+            <div className="p-4 text-center text-gray-600 dark:text-gray-300">Loading...</div>
           ) : error ? (
-            <div className="p-4 text-center text-red-500">{error}</div>
+            <div className="p-4 text-center text-red-500 dark:text-red-400">{error}</div>
           ) : filteredTools.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
               No tools found with the current filters
             </div>
           ) : (
@@ -210,36 +210,36 @@ const ToolBuilder: React.FC = () => {
         </div>
         
         {/* Tool Editor */}
-        <div className="flex-1 h-full overflow-y-auto p-6 bg-gray-50">
+        <div className="flex-1 h-full overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
           {isCreating ? (
             <>
-              <h2 className="text-2xl font-bold mb-6">Create New Tool</h2>
+              <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Create New Tool</h2>
               <ToolEditor 
                 tool={emptyTool}
                 onSave={handleCreate}
                 onCancel={() => setIsCreating(false)}
-                categories={allCategories}
+                categories={allCategories as string[]}
                 categoriesMap={CATEGORIES}
               />
             </>
           ) : selectedTool ? (
             <>
-              <h2 className="text-2xl font-bold mb-6">Edit Tool: {selectedTool.name}</h2>
+              <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Edit Tool: {selectedTool.name}</h2>
               <ToolEditor 
                 tool={selectedTool}
                 onSave={handleUpdate}
                 onCancel={() => setSelectedTool(null)}
-                categories={allCategories}
+                categories={allCategories as string[]}
                 categoriesMap={CATEGORIES}
               />
             </>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+            <div className="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
               <div className="text-center max-w-lg">
                 <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 100-12 6 6 0 000 12zm-1-5a1 1 0 112 0v2a1 1 0 11-2 0v-2zm1-7a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
                 </svg>
-                <p className="text-xl mb-4">Select a tool to edit or create a new one</p>
+                <p className="text-xl mb-4 text-gray-600 dark:text-gray-300">Select a tool to edit or create a new one</p>
                 
                 <div className="grid grid-cols-2 gap-3 mt-6">
                   {/* Quick start templates */}
@@ -254,10 +254,10 @@ const ToolBuilder: React.FC = () => {
                       emptyTool.description = "Generates creative text based on a prompt";
                       emptyTool.prompt_template = "Generate creative text based on the following prompt:\n\n{input}\n";
                     }}
-                    className="text-left p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 transition-colors duration-200"
+                    className="text-left p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200"
                   >
-                    <h3 className="font-medium text-gray-900">Text Generator</h3>
-                    <p className="text-sm text-gray-500">Create a basic text generation tool</p>
+                    <h3 className="font-medium text-gray-900 dark:text-white">Text Generator</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Create a basic text generation tool</p>
                   </button>
                   
                   <button
@@ -271,10 +271,10 @@ const ToolBuilder: React.FC = () => {
                       emptyTool.description = "Helps write and fix code";
                       emptyTool.prompt_template = "Help with the following code task:\n\nLanguage: {input.language}\nTask: {input.task}\nCurrent code (if any):\n{input.code}\n";
                     }}
-                    className="text-left p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 transition-colors duration-200"
+                    className="text-left p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200"
                   >
-                    <h3 className="font-medium text-gray-900">Code Helper</h3>
-                    <p className="text-sm text-gray-500">Create a tool for coding assistance</p>
+                    <h3 className="font-medium text-gray-900 dark:text-white">Code Helper</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Create a tool for coding assistance</p>
                   </button>
                   
                   <button
@@ -288,10 +288,10 @@ const ToolBuilder: React.FC = () => {
                       emptyTool.description = "Summarizes lengthy content";
                       emptyTool.prompt_template = "Summarize the following text:\n\n{input}\n";
                     }}
-                    className="text-left p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 transition-colors duration-200"
+                    className="text-left p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200"
                   >
-                    <h3 className="font-medium text-gray-900">Summarizer</h3>
-                    <p className="text-sm text-gray-500">Create a content summarization tool</p>
+                    <h3 className="font-medium text-gray-900 dark:text-white">Summarizer</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Create a content summarization tool</p>
                   </button>
                   
                   <button
@@ -305,10 +305,10 @@ const ToolBuilder: React.FC = () => {
                       emptyTool.description = "Analyzes data and provides insights";
                       emptyTool.prompt_template = "Analyze this data and provide insights:\n\n{input}\n";
                     }}
-                    className="text-left p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 transition-colors duration-200"
+                    className="text-left p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200"
                   >
-                    <h3 className="font-medium text-gray-900">Data Analyzer</h3>
-                    <p className="text-sm text-gray-500">Create a data analysis tool</p>
+                    <h3 className="font-medium text-gray-900 dark:text-white">Data Analyzer</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Create a data analysis tool</p>
                   </button>
                 </div>
               </div>

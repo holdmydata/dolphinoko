@@ -33,13 +33,13 @@ const ToolList: React.FC<ToolListProps> = ({
   const renderTool = (tool: Tool) => (
     <div 
       key={tool.id} 
-      className={`group flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer ${
-        selectedId === tool.id ? 'bg-blue-50' : ''
+      className={`group flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-950 cursor-pointer ${
+        selectedId === tool.id ? 'bg-gray-200 dark:bg-gray-900' : ''
       }`}
       onClick={() => onSelect(tool)}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{tool.name}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{tool.name}</p>
         {showCategory && tool.subcategory && (
           <p className="text-xs text-gray-500">{tool.subcategory}</p>
         )}
@@ -62,11 +62,11 @@ const ToolList: React.FC<ToolListProps> = ({
   );
 
   return (
-    <div className="divide-y divide-gray-200">
+    <div className="divide-y divide-gray-200 dark:divide-gray-700">
       {showCategory ? (
         Object.entries(groupedTools).map(([category, categoryTools]) => (
           <div key={category}>
-            <div className="px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+            <div className="px-4 py-2 bg-gray-50 dark:bg-gray-950 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
               {category}
             </div>
             {categoryTools.map(renderTool)}

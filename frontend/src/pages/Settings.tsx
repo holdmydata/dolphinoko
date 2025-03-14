@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import { useTheme } from "../context/ThemeContext";
+import { secureStorage } from "../utils/secureStorage";
 
 // Define settings interface
 interface Settings {
@@ -8,78 +10,116 @@ interface Settings {
   apiKeys: {
     claude: string;
   };
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   defaultProvider: string;
 }
 
 const Settings: React.FC = () => {
+  const { theme, setTheme } = useTheme();
+
   // Default settings
   const defaultSettings: Settings = {
     localEndpoints: {
-      ollama: 'http://localhost:11434',
+      ollama: "http://localhost:11434",
     },
     apiKeys: {
-      claude: '',
+      claude: "",
     },
-    theme: 'light',
-    defaultProvider: 'ollama',
+    theme: "light",
+    defaultProvider: "ollama",
   };
 
   // Load settings from localStorage or use defaults
   const loadSettings = (): Settings => {
-    const savedSettings = localStorage.getItem('mcp-toolbox-settings');
+    const savedSettings = localStorage.getItem("mcp-toolbox-settings");
+    let settings = defaultSettings;
+
     if (savedSettings) {
       try {
-        return JSON.parse(savedSettings);
+        settings = JSON.parse(savedSettings);
+
+        // Get the API keys from secure storage instead
+        settings.apiKeys.claude =
+          secureStorage.getItem("mcp-claude-api-key") || "";
       } catch (e) {
-        console.error('Failed to parse saved settings:', e);
+        console.error("Failed to parse saved settings:", e);
       }
     }
-    return defaultSettings;
+    return settings;
   };
 
   // State for settings
   const [settings, setSettings] = useState<Settings>(loadSettings());
   const [isSaved, setIsSaved] = useState(false);
 
+  // Sync theme from ThemeContext when component mounts
+  useEffect(() => {
+    setSettings((prev) => ({
+      ...prev,
+      theme,
+    }));
+  }, [theme]);
+
   // Handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    
+
     // Handle nested properties
-    if (name.includes('.')) {
-      const [section, key] = name.split('.');
-      setSettings(prev => ({
+    if (name.includes(".")) {
+      const [section, key] = name.split(".");
+      setSettings((prev) => ({
         ...prev,
         [section]: {
-          ...prev[section as keyof Settings],
-          [key]: value
-        }
+          ...(prev[section as keyof Settings] as Record<string, any>),
+          [key]: value,
+        },
       }));
     } else {
-      setSettings(prev => ({
+      setSettings((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
-    
+
+    // If theme is being changed, update it in ThemeContext
+    if (name === "theme") {
+      setTheme(value as "light" | "dark" | "system");
+    }
+
     // Reset saved status
     setIsSaved(false);
   };
 
   // Save settings
   const saveSettings = () => {
-    localStorage.setItem('mcp-toolbox-settings', JSON.stringify(settings));
+    // Save API keys to secure storage instead of including them in the main settings
+    secureStorage.setItem("mcp-claude-api-key", settings.apiKeys.claude);
+
+    const settingsForStorage = {
+      ...settings,
+      apiKeys: {
+        claude: "",
+      },
+    };
+    localStorage.setItem(
+      "mcp-toolbox-settings",
+      JSON.stringify(settingsForStorage)
+    );
     setIsSaved(true);
-    
+
     // Reset saved status after 3 seconds
     setTimeout(() => setIsSaved(false), 3000);
   };
 
   // Reset settings to defaults
   const resetSettings = () => {
-    if (window.confirm('Are you sure you want to reset all settings to defaults?')) {
+    if (
+      window.confirm("Are you sure you want to reset all settings to defaults?")
+    ) {
       setSettings(defaultSettings);
+      setTheme(defaultSettings.theme);
       setIsSaved(false);
     }
   };
@@ -87,20 +127,24 @@ const Settings: React.FC = () => {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200">
+          Settings
+        </h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
           Configure your Dolphin MCP Toolbox preferences
         </p>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         {/* Local Endpoints Section */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Local Model Endpoints</h2>
-          
+          <h2 className="text-xl font-semibold text-gray-200 dark:text-white mb-4 pb-2 border-b dark:border-gray-700">
+            Local Model Endpoints
+          </h2>
+
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Ollama API Endpoint
               </label>
               <input
@@ -108,10 +152,10 @@ const Settings: React.FC = () => {
                 name="localEndpoints.ollama"
                 value={settings.localEndpoints.ollama}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="http://localhost:11434"
               />
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 The URL of your local Ollama server
               </p>
             </div>
@@ -120,11 +164,13 @@ const Settings: React.FC = () => {
 
         {/* API Keys Section */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 pb-2 border-b">External API Keys</h2>
-          
+          <h2 className="text-xl  text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
+            External API Keys
+          </h2>
+
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Claude API Key (Optional)
               </label>
               <input
@@ -132,10 +178,10 @@ const Settings: React.FC = () => {
                 name="apiKeys.claude"
                 value={settings.apiKeys.claude}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="sk-ant-api..." 
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                placeholder="sk-ant-api..."
               />
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Required only if you want to use Claude models
               </p>
             </div>
@@ -144,17 +190,19 @@ const Settings: React.FC = () => {
 
         {/* Appearance Section */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Appearance</h2>
-          
+          <h2 className="text-xl  text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
+            Appearance
+          </h2>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Theme
             </label>
             <select
               name="theme"
               value={settings.theme}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="light">Light</option>
               <option value="dark">Dark</option>
@@ -165,17 +213,19 @@ const Settings: React.FC = () => {
 
         {/* Defaults Section */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 pb-2 border-b">Defaults</h2>
-          
+          <h2 className="text-xl  text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
+            Defaults
+          </h2>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Default Provider
             </label>
             <select
               name="defaultProvider"
               value={settings.defaultProvider}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="ollama">Ollama (Local)</option>
               <option value="claude">Claude (Anthropic)</option>
@@ -187,21 +237,31 @@ const Settings: React.FC = () => {
         <div className="flex justify-between items-center">
           <button
             onClick={resetSettings}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Reset to Defaults
           </button>
-          
+
           <div className="flex items-center space-x-4">
             {isSaved && (
-              <span className="text-green-600 flex items-center">
-                <svg className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              <span className="text-green-600 dark:text-green-400 flex items-center">
+                <svg
+                  className="h-5 w-5 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 Settings saved!
               </span>
             )}
-            
+
             <button
               onClick={saveSettings}
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"

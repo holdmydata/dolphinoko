@@ -157,14 +157,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
               <div 
                 key={model.name}
                 className={`
-                  p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors
-                  ${value === model.name ? 'bg-blue-50' : ''}
+                  p-3 border-b dark:text-gray-200 border-gray-100 dark:border-gray-900 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-950 transition-colors
+                  ${value === model.name ? 'bg-gray-50 dark:bg-gray-950' : ''}
                 `}
                 onClick={() => onChange(model.name)}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="font-medium text-gray-800">
+                    <div className="font-medium text-gray-800 dark:text-gray-200">
                       {model.name}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">

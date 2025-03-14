@@ -53,7 +53,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
   // Check if category is custom when tool loads
   useEffect(() => {
     setCustomCategory(
-      !categories.includes(editedTool.category) && !!editedTool.category
+      editedTool.category ? !categories.includes(editedTool.category) : false
     );
   }, [editedTool.category, categories]);
 
@@ -99,7 +99,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Name
           </label>
           <input
@@ -108,20 +108,20 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
             value={editedTool.name}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
             placeholder="Tool name"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Description
           </label>
           <textarea
             name="description"
             value={editedTool.description}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
             rows={2}
             placeholder="Short description of what this tool does"
           />
@@ -129,7 +129,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Category
             </label>
             <div className="flex items-center space-x-2">
@@ -138,7 +138,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   name="category"
                   value={editedTool.category}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
                   <option value="">Select a category</option>
                   {categories.map((cat) => (
@@ -153,7 +153,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   name="category"
                   value={editedTool.category}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   placeholder="Custom category"
                 />
               )}
@@ -173,7 +173,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Subcategory
             </label>
             <div className="flex items-center space-x-2">
@@ -182,7 +182,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   name="subcategory"
                   value={editedTool.subcategory}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   disabled={
                     !editedTool.category || availableSubcategories.length === 0
                   }
@@ -200,7 +200,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   name="subcategory"
                   value={editedTool.subcategory}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
                   placeholder="Custom subcategory"
                   disabled={!editedTool.category}
                 />
@@ -224,14 +224,14 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Provider
             </label>
             <select
               name="provider"
               value={editedTool.provider}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               <option value="ollama">Ollama</option>
               <option value="openai">OpenAI</option>
@@ -240,7 +240,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Model
             </label>
             <input
@@ -248,7 +248,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               name="model"
               value={editedTool.model}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
               placeholder="e.g., llama3:latest"
               required
             />
@@ -256,7 +256,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Prompt Template
           </label>
           <div className="relative">
@@ -264,7 +264,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               name="prompt_template"
               value={editedTool.prompt_template}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 font-mono"
               rows={8}
               placeholder="Template with {input} placeholders"
               required
@@ -280,7 +280,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Temperature
               <span className="ml-1 text-gray-400">(0-1)</span>
             </label>
@@ -292,12 +292,12 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               min="0"
               max="1"
               step="0.1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Max Tokens
             </label>
             <input
@@ -308,7 +308,7 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               min="1"
               max="4000"
               step="1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
           </div>
         </div>
@@ -318,13 +318,13 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-500 border border-transparent rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 text-sm font-medium text-white bg-gray-500 border border-transparent rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
         >
           Save Tool
         </button>

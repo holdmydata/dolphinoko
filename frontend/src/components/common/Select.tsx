@@ -1,3 +1,4 @@
+// frontend/src/components/common/Select.tsx
 import React, { forwardRef } from 'react';
 
 interface Option {
@@ -29,7 +30,8 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   // Base styles
   const baseStyles = `
     border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-    ${error ? 'border-red-300' : 'border-gray-300'}
+    ${error ? 'border-red-300 dark:border-red-700' : 'border-gray-300 dark:border-gray-600'}
+    bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
   `;
   
   // Size styles
@@ -48,7 +50,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   return (
     <div className={`${fullWidth ? 'w-full' : ''} ${containerClassName}`}>
       {label && (
-        <label htmlFor={rest.id} className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor={rest.id} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           {label}
         </label>
       )}
@@ -72,7 +74,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(({
       </select>
       
       {(helperText || error) && (
-        <p className={`mt-1 text-sm ${error ? 'text-red-600' : 'text-gray-500'}`}>
+        <p className={`mt-1 text-sm ${error ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
           {error || helperText}
         </p>
       )}

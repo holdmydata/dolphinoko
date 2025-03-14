@@ -12,10 +12,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     { to: '/', label: 'Dashboard', icon: 'home' },
     { to: '/tools', label: 'Tool Builder', icon: 'tools' },
     { to: '/chat', label: 'Chat', icon: 'chat' },
+    { to: '/monitoring', label: 'Monitoring', icon: 'monitoring' },
     { to: '/settings', label: 'Settings', icon: 'settings' },
   ];
 
-  // Icon components based on name
+  // Icon components based on name (unchanged as these are SVGs)
   const icons: Record<string, JSX.Element> = {
     home: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -45,6 +46,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           strokeWidth="2"
           d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
         />
+      </svg>
+    ),
+    monitoring: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+          />
       </svg>
     ),
     settings: (
@@ -77,19 +88,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
+          className="fixed inset-0 z-40 bg-gray-600 dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 lg:hidden"
           onClick={handleOverlayClick}
         ></div>
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 shadow-lg transform ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto`}
       >
-        <div className="flex items-center justify-center h-16 border-b border-gray-200 px-6">
-          <div className="text-xl font-bold text-gray-800 flex items-center">
+        <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-6">
+          <div className="text-xl font-bold text-gray-800 dark:text-white flex items-center">
             <svg className="h-6 w-6 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" strokeWidth="2"/>
               <path d="M15.5 9.5L11 14L8.5 11.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -107,8 +118,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 className={({ isActive }) =>
                   `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                     isActive
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-gray-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`
                 }
               >
@@ -119,13 +130,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           </div>
         </nav>
 
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-200">
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <h5 className="text-sm font-medium text-blue-800 mb-2">Local Models Active</h5>
-            <div className="flex items-center text-xs text-blue-600">
+        <div className="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="bg-gray-50 dark:bg-gray-900/30 p-3 rounded-lg">
+            <h5 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">Local Models Active</h5>
+            <div className="flex items-center text-xs text-blue-600 dark:text-blue-400">
               <span className="flex h-2 w-2 relative mr-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 dark:bg-gray-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-gray-500 dark:bg-gray-400"></span>
               </span>
               Ollama running on localhost
             </div>

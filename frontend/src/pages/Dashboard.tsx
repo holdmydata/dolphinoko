@@ -1,3 +1,4 @@
+// frontend/src/pages/Dashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { LLMRequest, LLMResponse } from '../context/ToolContext';
 import { useTools } from '../hooks/useTools';
@@ -41,6 +42,8 @@ const Dashboard: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [subcategoryFilter, setSubcategoryFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const baseStyles = 'font-medium rounded transition-colors duration-200 focus:outline-none';
   
   // Get the selected tool
   const selectedTool = tools.find(tool => tool.id === selectedToolId);
@@ -105,9 +108,9 @@ const Dashboard: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Dolphinoko - Dolphin's Storage Buddy!</h1>
-        <h1 className="text-3xl font-bold text-gray-800">ドルフィのこ</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Dolphinoko - Dolphin's Storage Buddy!</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">ドルフィのこ</h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-300">
           Use your custom AI tools powered by local models through MCP
         </p>
       </div>
@@ -115,12 +118,12 @@ const Dashboard: React.FC = () => {
       {/* Main content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tool selector */}
-        <div className="col-span-1 bg-white p-6 rounded-lg shadow-md">
+        <div className="col-span-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Select a Tool</h2>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Select a Tool</h2>
             <a 
               href="/tools" 
-              className="text-blue-500 hover:text-blue-700 text-sm flex items-center"
+              className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm flex items-center"
             >
               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -134,11 +137,11 @@ const Dashboard: React.FC = () => {
             <input
               type="text"
               placeholder="Search tools..."
-              className="w-full px-3 py-2 pl-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 pl-10 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <span className="absolute left-3 top-2.5 text-gray-400">
+            <span className="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
@@ -146,14 +149,14 @@ const Dashboard: React.FC = () => {
           </div>
           
           {/* Category filters */}
-          <div className="mb-4 pb-3 border-b">
-            <div className="text-sm font-medium text-gray-500 mb-2">Categories</div>
+          <div className="mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Categories</div>
             <div className="flex flex-wrap gap-2">
               <button
                 className={`px-2 py-1 text-xs rounded-md transition-colors duration-200 ${
                   categoryFilter === null
                     ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200'
                 }`}
                 onClick={() => setCategoryFilter(null)}
               >
@@ -166,7 +169,7 @@ const Dashboard: React.FC = () => {
                   className={`px-2 py-1 text-xs rounded-md transition-colors duration-200 flex items-center ${
                     categoryFilter === category.name
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200'
                   }`}
                   onClick={() => setCategoryFilter(category.name)}
                 >
@@ -178,14 +181,14 @@ const Dashboard: React.FC = () => {
           
           {/* Subcategory filters - only when a category is selected */}
           {categoryFilter && (
-            <div className="mb-4 pb-3 border-b">
-              <div className="text-sm font-medium text-gray-500 mb-2">Subcategories</div>
+            <div className="mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Subcategories</div>
               <div className="flex flex-wrap gap-2">
                 <button
                   className={`px-2 py-1 text-xs rounded-md transition-colors duration-200 ${
                     subcategoryFilter === null
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200'
                   }`}
                   onClick={() => setSubcategoryFilter(null)}
                 >
@@ -198,7 +201,7 @@ const Dashboard: React.FC = () => {
                     className={`px-2 py-1 text-xs rounded-md transition-colors duration-200 ${
                       subcategoryFilter === subcat
                         ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                        : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200'
                     }`}
                     onClick={() => setSubcategoryFilter(subcat)}
                   >
@@ -212,24 +215,24 @@ const Dashboard: React.FC = () => {
           {/* Tool list */}
           {tools.length === 0 ? (
             <div className="text-center py-6">
-              <p className="text-gray-500 mb-4">You haven't created any tools yet</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">You haven't created any tools yet</p>
               <a 
                 href="/tools" 
-                className="inline-block bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition-colors duration-200"
+                className="inline-block bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors duration-200"
               >
                 Create Your First Tool
               </a>
             </div>
           ) : filteredTools.length === 0 ? (
             <div className="text-center py-6">
-              <p className="text-gray-500">No tools match your filters</p>
+              <p className="text-gray-500 dark:text-gray-400">No tools match your filters</p>
               <button
                 onClick={() => {
                   setCategoryFilter(null);
                   setSubcategoryFilter(null);
                   setSearchQuery('');
                 }}
-                className="mt-2 text-blue-500 hover:text-blue-700"
+                className="mt-2 text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
               >
                 Reset filters
               </button>
@@ -244,28 +247,28 @@ const Dashboard: React.FC = () => {
                       <span className="mr-2 text-lg">
                         {CATEGORIES.find(c => c.name === category)?.icon || '🔧'}
                       </span>
-                      <h3 className="font-medium text-gray-700">{category}</h3>
+                      <h3 className="font-medium text-gray-700 dark:text-gray-300">{category}</h3>
                     </div>
-                    <div className="space-y-2 pl-2 border-l-2 border-gray-100">
+                    <div className="space-y-2 pl-2 border-l-2 border-gray-100 dark:border-gray-700">
                       {categoryTools.map(tool => (
                         <div
                           key={tool.id}
                           className={`p-3 border rounded-md cursor-pointer transition-all duration-150 ${
                             selectedToolId === tool.id 
-                              ? 'border-blue-500 bg-blue-50 shadow-sm' 
-                              : 'border-gray-200 hover:bg-gray-50'
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-sm' 
+                              : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                           }`}
                           onClick={() => setSelectedToolId(tool.id!)}
                         >
-                          <h3 className="font-medium">{tool.name}</h3>
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{tool.description}</p>
+                          <h3 className="font-medium text-gray-800 dark:text-white">{tool.name}</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{tool.description}</p>
                           <div className="mt-2 text-xs flex items-center flex-wrap gap-1">
                             {tool.subcategory && (
-                              <span className="bg-gray-100 px-2 py-1 rounded-full">
+                              <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full text-gray-700 dark:text-gray-300">
                                 {tool.subcategory}
                               </span>
                             )}
-                            <span className="bg-gray-100 px-2 py-1 rounded text-gray-600">
+                            <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300">
                               {tool.model}
                             </span>
                           </div>
@@ -281,25 +284,25 @@ const Dashboard: React.FC = () => {
                       key={tool.id}
                       className={`p-3 border rounded-md cursor-pointer transition-all duration-150 ${
                         selectedToolId === tool.id 
-                          ? 'border-blue-500 bg-blue-50 shadow-sm' 
-                          : 'border-gray-200 hover:bg-gray-50'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-sm' 
+                          : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                       onClick={() => setSelectedToolId(tool.id!)}
                     >
-                      <h3 className="font-medium">{tool.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">{tool.description}</p>
+                      <h3 className="font-medium text-gray-800 dark:text-white">{tool.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{tool.description}</p>
                       <div className="mt-2 text-xs flex items-center flex-wrap gap-1">
                         {tool.category && (
-                          <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full flex items-center">
+                          <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full flex items-center">
                             {CATEGORIES.find(c => c.name === tool.category)?.icon || '🔧'} {tool.category}
                           </span>
                         )}
                         {tool.subcategory && (
-                          <span className="bg-gray-100 px-2 py-1 rounded-full">
+                          <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full text-gray-700 dark:text-gray-300">
                             {tool.subcategory}
                           </span>
                         )}
-                        <span className="bg-gray-100 px-2 py-1 rounded text-gray-600">
+                        <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300">
                           {tool.model}
                         </span>
                       </div>
@@ -312,12 +315,12 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Input and response area */}
-        <div className="col-span-1 lg:col-span-2 bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="p-6 bg-gray-50 border-b">
+        <div className="col-span-1 lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+          <div className="p-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Tool Playground</h2>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Tool Playground</h2>
               {selectedTool && (
-                <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-md flex items-center text-sm">
+                <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-md flex items-center text-sm">
                   <span className="mr-1">
                     {CATEGORIES.find(c => c.name === selectedTool.category)?.icon || '🔧'}
                   </span> 
@@ -325,7 +328,7 @@ const Dashboard: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="bg-white border border-gray-200 rounded-md">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -334,10 +337,10 @@ const Dashboard: React.FC = () => {
                   : "Select a tool first..."
                 }
                 disabled={!selectedTool}
-                className="w-full p-4 min-h-32 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-4 min-h-32 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               />
-              <div className="flex justify-between border-t p-3 bg-gray-50">
-                <div className="text-sm text-gray-500">
+              <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   {selectedTool 
                     ? `Using: ${selectedTool.provider} / ${selectedTool.model}` 
                     : 'No tool selected'
@@ -348,8 +351,8 @@ const Dashboard: React.FC = () => {
                   disabled={!selectedTool || loading}
                   className={`px-4 py-2 rounded-md text-white ${
                     !selectedTool || loading 
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                      : 'bg-blue-500 hover:bg-blue-600'
+                      ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' 
+                      : 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700'
                   }`}
                 >
                   {loading ? (
@@ -367,41 +370,41 @@ const Dashboard: React.FC = () => {
           </div>
           
           <div className="p-6">
-            <h3 className="text-lg font-medium mb-3">Response</h3>
+            <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-white">Response</h3>
             
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md mb-4">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 p-4 rounded-md mb-4">
                 {error}
               </div>
             )}
             
             {response ? (
-              <div className="bg-gray-50 p-4 rounded-md border border-gray-200 min-h-40">
-                <pre className="whitespace-pre-wrap font-mono text-sm">
+              <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md border border-gray-200 dark:border-gray-700 min-h-40">
+                <pre className="whitespace-pre-wrap font-mono text-sm text-gray-800 dark:text-gray-200">
                   {response.output}
                 </pre>
                 
-                <div className="mt-4 pt-3 border-t border-gray-200 text-xs text-gray-500">
+                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
                   <div className="flex flex-wrap gap-2">
-                    <span className="bg-gray-100 px-2 py-1 rounded">
+                    <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-700 dark:text-gray-300">
                       Provider: {response.metadata.provider}
                     </span>
-                    <span className="bg-gray-100 px-2 py-1 rounded">
+                    <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-700 dark:text-gray-300">
                       Model: {response.metadata.model}
                     </span>
-                    <span className="bg-gray-100 px-2 py-1 rounded">
+                    <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-700 dark:text-gray-300">
                       Processing time: {response.metadata.processing_time.toFixed(2)}s
                     </span>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-gray-50 border border-gray-200 p-8 rounded-md min-h-40 flex items-center justify-center text-gray-400">
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-8 rounded-md min-h-40 flex items-center justify-center text-gray-400 dark:text-gray-500">
                 <div className="text-center">
                   <svg className="w-12 h-12 mx-auto mb-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-lg">Run a tool to see the response here</p>
+                  <p className="text-lg text-gray-500 dark:text-gray-400">Run a tool to see the response here</p>
                 </div>
               </div>
             )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { styles, cx } from '../../utils/theme';
 
 type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
 type BadgeSize = 'sm' | 'md' | 'lg';
@@ -19,16 +20,6 @@ const Badge: React.FC<BadgeProps> = ({
   // Base styles
   const baseStyles = 'inline-flex items-center font-medium rounded-full';
   
-  // Variant styles
-  const variantStyles = {
-    default: 'bg-gray-100 text-gray-800',
-    primary: 'bg-blue-100 text-blue-800',
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800',
-    info: 'bg-indigo-100 text-indigo-800',
-  };
-  
   // Size styles
   const sizeStyles = {
     sm: 'text-xs px-2 py-0.5',
@@ -38,12 +29,12 @@ const Badge: React.FC<BadgeProps> = ({
 
   return (
     <span
-      className={`
-        ${baseStyles}
-        ${variantStyles[variant]}
-        ${sizeStyles[size]}
-        ${className}
-      `}
+      className={cx(
+        baseStyles,
+        styles.badge[variant],
+        sizeStyles[size],
+        className
+      )}
     >
       {children}
     </span>
