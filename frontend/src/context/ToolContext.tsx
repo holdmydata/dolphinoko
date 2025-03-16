@@ -11,24 +11,28 @@ export interface Tool {
   provider: string;
   model: string;
   prompt_template: string;
+  activation_phrases?: string[];
   parameters: {
     temperature: number;
     max_tokens: number;
     [key: string]: any;
   };
+  schema: {
+    [key: string]: any; // Security? >.<
+  }
   created_at?: string;
   updated_at?: string;
 }
 
 export interface LLMRequest {
   tool_id: string;
-  input: string;
+  input: string | Record<string, any>;
   parameters?: any;
 }
 
 export interface LLMResponse {
   tool_id: string;
-  input: string;
+  input: string | Record<string, any>;
   output: string;
   metadata: {
     provider: string;
@@ -81,6 +85,11 @@ export const ToolProvider: React.FC<{ children: React.ReactNode }> = ({
   const createTool = async (tool: Tool): Promise<Tool> => {
     try {
       const response = await api.post<Tool>("/api/tools", tool);
+      
+      // Reload tools on the server
+      await api.post("/api/tools/reload", {});
+      
+      // Update local state
       setTools(prev => [...prev, response]);
       return response;
     } catch (err) {
@@ -92,6 +101,11 @@ export const ToolProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateTool = async (id: string, tool: Tool): Promise<Tool> => {
     try {
       const response = await api.put<Tool>(`/api/tools/${id}`, tool);
+      
+      // Reload tools on the server
+      await api.post("/api/tools/reload", {});
+      
+      // Update local state
       setTools(prev => prev.map(t => t.id === id ? response : t));
       return response;
     } catch (err) {
@@ -99,13 +113,18 @@ export const ToolProvider: React.FC<{ children: React.ReactNode }> = ({
       throw err;
     }
   };
-
+  
   const deleteTool = async (id: string): Promise<void> => {
     try {
-      await api.delete(`/api/tools/${id}`); // Add /api prefix
-      setTools((prev) => prev.filter((t) => t.id !== id));
+      await api.delete(`/api/tools/${id}`);
+      
+      // Reload tools on the server
+      await api.post("/api/tools/reload", {});
+      
+      // Update local state
+      setTools(prev => prev.filter(t => t.id !== id));
     } catch (err) {
-      console.error("Failed to delete tool:", err);
+      console.error('Failed to delete tool:', err);
       throw err;
     }
   };

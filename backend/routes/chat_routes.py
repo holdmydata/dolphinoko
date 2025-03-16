@@ -61,3 +61,5 @@ async def chat_with_ollama(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate chat response: {str(e)}")
+    
+

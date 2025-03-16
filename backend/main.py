@@ -249,6 +249,22 @@ async def pull_ollama_model(request: dict):
             status_code=500,
             detail=f"Failed to pull model: {str(e)}"
         )
+        
+@app.post("/api/tools/reload")
+async def reload_tools():
+    """Reload tools from JSON file without server restart"""
+    global tools_db  # Use the global variable
+    
+    try:
+        # Force reload of tools from JSON file
+        _tools_data = load_tools_json()
+        tools_db = [ToolConfig(**tool) for tool in _tools_data]
+        
+        logger.info(f"Reloaded {len(tools_db)} tools from storage")
+        return {"success": True, "tools_count": len(tools_db)}
+    except Exception as e:
+        logger.error(f"Failed to reload tools: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to reload tools: {str(e)}") 
 
 # Run the app
 if __name__ == "__main__":

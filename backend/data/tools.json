@@ -10,22 +10,29 @@
       "temperature": 0.7,
       "max_tokens": 500
     },
+    "schema": {
+      "input": {
+        "type": "string",
+        "description": "The topic for the joke",
+        "required": true
+      }
+    },
     "created_at": "2025-03-13T18:12:10Z",
     "updated_at": "2025-03-13T18:12:10Z"
   },
   {
     "id": "4bc28e17-751f-4d90-9a3e-8de7f5ca2b22",
     "name": "Tool Creator",
-    "description": "Creates new MCP tools based on a description",
+    "description": "Creates new MCP tools based on a description with support for structured inputs",
     "provider": "ollama",
     "model": "dolphin3:latest",
-    "prompt_template": "Create a complete MCP tool definition based on this description. Return ONLY the JSON.\n\nDesired tool functionality: {input}\n\nProvide a JSON object with these fields:\n- name: Short descriptive name\n- category: General purpose category\n- subcategory: More specific category\n- description: Brief explanation of what the tool does\n- prompt_template: The prompt template with {input} placeholders\n- parameters: Default temperature and max_tokens values\n",
+    "prompt_template": "Create a complete MCP tool definition based on this description. Return ONLY valid JSON.\n\nDesired tool functionality: {input}\n\nProvide a JSON object with these fields:\n- name: Short descriptive name\n- category: General purpose category\n- subcategory: More specific category\n- description: Brief explanation of what the tool does\n- prompt_template: The prompt template with placeholders for user inputs\n- parameters: Default temperature and max_tokens values\n\nFor the prompt_template, you can use either:\n1. Simple format with a single {input} placeholder\n2. Structured format with multiple parameters like {input.parameter_name}\n\nChoose the most appropriate format based on the tool's complexity. For tools that require multiple inputs, use the structured format.\n\nExample with simple input:\n\"prompt_template\": \"Summarize the following text:\\n\\n{input}\\n\"\n\nExample with structured input:\n\"prompt_template\": \"Create a response with these details:\\n\\nTopic: {input.topic}\\nAudience: {input.audience}\\nTone: {input.tone}\\n\"\n",
     "parameters": {
       "temperature": 0.3,
       "max_tokens": 1000
     },
     "created_at": "2025-03-14T10:00:00Z",
-    "updated_at": "2025-03-13T18:55:09Z"
+    "updated_at": "2025-03-14T17:55:09Z"
   },
   {
     "id": "5de29f16-8e37-4a12-b18f-26d7a9b64c35",
