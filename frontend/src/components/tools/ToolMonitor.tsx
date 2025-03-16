@@ -6,7 +6,7 @@ export interface ToolExecutionEvent {
   toolId: string;
   toolName: string;
   input: string | Record<string, any>;
-  output: string;
+  output: string | Record<string, any>;
   startTime: Date;
   endTime?: Date;
   status: "pending" | "success" | "error";

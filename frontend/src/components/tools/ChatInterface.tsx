@@ -8,7 +8,7 @@ import {
 } from "../../context/ToolContext";
 import { ToolExecutionEvent } from "./ToolMonitor";
 import { ensureChatTool } from "../../utils/ensureTools";
-import { v4 as uuidv4 } from 'uuid'; // Make sure you have this import
+import { v4 as uuidv4 } from "uuid"; // Make sure you have this import
 
 interface Message {
   id: string;
@@ -20,7 +20,7 @@ interface Message {
 
 // Add these type definitions
 interface ProcessedMessage {
-  type: 'chat' | 'tool' | 'parameter_request';
+  type: "chat" | "tool" | "parameter_request";
   content?: string;
   toolId?: string;
   parameters?: any;
@@ -65,9 +65,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [input, setInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [showMetrics, setShowMetrics] = useState<{ [key: string]: boolean }>({});
+  const [showMetrics, setShowMetrics] = useState<{ [key: string]: boolean }>(
+    {}
+  );
   // Add state for parameter collection
-  const [collectingParameters, setCollectingParameters] = useState<ParameterCollectionState | null>(null);
+  const [collectingParameters, setCollectingParameters] =
+    useState<ParameterCollectionState | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +116,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Send message to the LLM - UPDATED to include message processing
   const sendMessage = async () => {
     if (!input.trim()) return;
-    
+
     // Create user message
     const messageId = generateId();
     const userMessage: Message = {
@@ -128,24 +131,24 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setInput("");
     setError(null);
     setIsLoading(true);
-    
+
     // Try to process with message processor first (for tool detection)
     if (messageProcessor) {
       try {
         const processed = await messageProcessor(userMessage.content);
-        
-        if (processed.type === 'tool' && processed.toolId) {
+
+        if (processed.type === "tool" && processed.toolId) {
           await handleToolProcessing(processed);
           setIsLoading(false);
           return;
         }
-        
-        if (processed.type === 'parameter_request') {
+
+        if (processed.type === "parameter_request") {
           // Handle parameter collection UI
           setCollectingParameters({
-            toolId: processed.toolId || '',
+            toolId: processed.toolId || "",
             currentParams: processed.currentParameters || {},
-            missingParams: processed.missingParameters || []
+            missingParams: processed.missingParameters || [],
           });
           setIsLoading(false);
           return;
@@ -155,7 +158,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         // Fall through to normal chat processing
       }
     }
-    
+
     // If no tool was triggered or no processor is available, proceed with normal chat
     if (!modelName) {
       const errorMessage: Message = {
@@ -331,17 +334,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setIsLoading(false);
     }
   };
-  
+
   // Handle tool processing
   const handleToolProcessing = async (processed: ProcessedMessage) => {
     if (!processed.toolId) return;
-    
+
+    console.log("Starting tool processing:", processed);
+
     // Create execution ID
     const executionId = uuidv4();
-    
+
     // Get tool name
-    const toolName = toolContext?.tools.find(t => t.id === processed.toolId)?.name || 'Unknown Tool';
-    
+    const toolName =
+      toolContext?.tools.find((t) => t.id === processed.toolId)?.name ||
+      "Unknown Tool";
+    console.log("Found tool:", toolName);
+
     // Create pending event
     const pendingExecution: ToolExecutionEvent = {
       id: executionId,
@@ -353,21 +361,29 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       status: "pending",
       metrics: {},
     };
-    
+
     // Report pending execution
+    console.log("Reporting pending execution:", pendingExecution);
     onToolExecution(pendingExecution);
-    
+
     try {
       // Execute the tool
       if (!toolContext?.runTool) {
         throw new Error("Tool execution not available");
       }
-      
+
+      console.log("Calling toolContext.runTool with:", {
+        tool_id: processed.toolId,
+        input: processed.parameters,
+      });
+
       const response = await toolContext.runTool({
         tool_id: processed.toolId,
         input: processed.parameters,
       });
-      
+
+      console.log("Tool execution response:", response);
+
       // Create success execution
       const successExecution: ToolExecutionEvent = {
         id: executionId,
@@ -383,10 +399,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           ...response.metadata,
         },
       };
-      
+
       // Report success execution
+      console.log("Reporting success execution:", successExecution);
       onToolExecution(successExecution);
-      
+
       // Add assistant message
       const assistantMessage: Message = {
         id: generateId(),
@@ -395,18 +412,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         timestamp: new Date(),
         toolExecution: successExecution,
       };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      
-      // Auto-show metrics
-      setShowMetrics(prev => ({
-        ...prev,
-        [assistantMessage.id]: true,
-      }));
-      
+
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error: any) {
-      console.error('Tool execution failed:', error);
-      
+      console.error("Tool execution failed:", error);
+      console.log("Error details:", error.message, error.stack);
+
       // Create error execution
       const errorExecution: ToolExecutionEvent = {
         id: executionId,
@@ -421,10 +432,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           error: error.message,
         },
       };
-      
+
       // Report error execution
+      console.log("Reporting error execution:", errorExecution);
       onToolExecution(errorExecution);
-      
+
       // Add error message
       const errorMessage: Message = {
         id: generateId(),
@@ -433,39 +445,40 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         timestamp: new Date(),
         toolExecution: errorExecution,
       };
-      
-      setMessages(prev => [...prev, errorMessage]);
+
+      setMessages((prev) => [...prev, errorMessage]);
     }
   };
-  
   // Submit parameters for a tool
   const handleParameterSubmit = async (parameters: Record<string, any>) => {
     if (!collectingParameters) return;
-    
+
     // Combine current and new parameters
     const combinedParams = {
       ...collectingParameters.currentParams,
       ...parameters,
     };
-    
+
     // Reset parameter collection state
     setCollectingParameters(null);
-    
+
     // Process with the tool
     if (toolContext) {
       setIsLoading(true);
-      
+
       try {
         const response = await toolContext.runTool({
           tool_id: collectingParameters.toolId,
           input: combinedParams,
         });
-        
+
         // Create execution event
         const executionEvent: ToolExecutionEvent = {
           id: generateId(),
           toolId: collectingParameters.toolId,
-          toolName: toolContext.tools.find(t => t.id === collectingParameters.toolId)?.name || 'Unknown Tool',
+          toolName:
+            toolContext.tools.find((t) => t.id === collectingParameters.toolId)
+              ?.name || "Unknown Tool",
           input: combinedParams,
           output: response.output,
           startTime: new Date(),
@@ -473,10 +486,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           status: "success",
           metrics: response.metadata,
         };
-        
+
         // Report execution
         onToolExecution(executionEvent);
-        
+
         // Add assistant message
         const assistantMessage: Message = {
           id: generateId(),
@@ -485,11 +498,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           timestamp: new Date(),
           toolExecution: executionEvent,
         };
-        
-        setMessages(prev => [...prev, assistantMessage]);
+
+        setMessages((prev) => [...prev, assistantMessage]);
       } catch (error: any) {
-        console.error('Parameter submission failed:', error);
-        
+        console.error("Parameter submission failed:", error);
+
         // Add error message
         const errorMessage: Message = {
           id: generateId(),
@@ -497,8 +510,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           content: `Error: ${error.message || "Unknown error"}`,
           timestamp: new Date(),
         };
-        
-        setMessages(prev => [...prev, errorMessage]);
+
+        setMessages((prev) => [...prev, errorMessage]);
       } finally {
         setIsLoading(false);
       }
@@ -773,42 +786,45 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <p className="text-sm text-blue-700 mb-4">
               Please provide the following information to continue:
             </p>
-            
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              // Extract form data and submit
-              const formData = new FormData(e.currentTarget);
-              const parameters: Record<string, any> = {};
-              
-              collectingParameters.missingParams.forEach(param => {
-                const value = formData.get(param.name);
-                if (value) {
-                  // Convert types as needed
-                  if (param.type === 'number') {
-                    parameters[param.name] = Number(value);
-                  } else if (param.type === 'boolean') {
-                    parameters[param.name] = value === 'true';
-                  } else {
-                    parameters[param.name] = value;
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                // Extract form data and submit
+                const formData = new FormData(e.currentTarget);
+                const parameters: Record<string, any> = {};
+
+                collectingParameters.missingParams.forEach((param) => {
+                  const value = formData.get(param.name);
+                  if (value) {
+                    // Convert types as needed
+                    if (param.type === "number") {
+                      parameters[param.name] = Number(value);
+                    } else if (param.type === "boolean") {
+                      parameters[param.name] = value === "true";
+                    } else {
+                      parameters[param.name] = value;
+                    }
                   }
-                }
-              });
-              
-              handleParameterSubmit(parameters);
-            }}>
+                });
+
+                handleParameterSubmit(parameters);
+              }}
+            >
               <div className="space-y-3">
-                {collectingParameters.missingParams.map(param => (
+                {collectingParameters.missingParams.map((param) => (
                   <div key={param.name}>
                     <label className="block text-sm font-medium text-blue-700 mb-1">
-                      {param.name}{param.required ? ' *' : ''}
+                      {param.name}
+                      {param.required ? " *" : ""}
                       {param.description && (
                         <span className="ml-1 text-xs font-normal text-blue-500">
                           ({param.description})
                         </span>
                       )}
                     </label>
-                    {param.type === 'boolean' ? (
-                      <select 
+                    {param.type === "boolean" ? (
+                      <select
                         name={param.name}
                         className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required={param.required}
@@ -818,7 +834,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       </select>
                     ) : (
                       <input
-                        type={param.type === 'number' ? 'number' : 'text'}
+                        type={param.type === "number" ? "number" : "text"}
                         name={param.name}
                         className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required={param.required}
@@ -827,7 +843,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                 ))}
               </div>
-              
+
               <div className="mt-4 flex justify-end space-x-2">
                 <button
                   type="button"

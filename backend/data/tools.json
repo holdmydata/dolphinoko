@@ -31,6 +31,13 @@
       "temperature": 0.3,
       "max_tokens": 1000
     },
+    "schema": {
+      "input": {
+        "type": "string",
+        "description": "The desired functionality of the tool",
+        "required": true
+      }
+    },
     "created_at": "2025-03-14T10:00:00Z",
     "updated_at": "2025-03-14T17:55:09Z"
   },
@@ -44,6 +51,13 @@
     "parameters": {
       "temperature": 0.3,
       "max_tokens": 1000
+    },
+    "schema": {
+      "input": {
+        "type": "string",
+        "description": "The original prompt template to enhance",
+        "required": true
+      }
     },
     "created_at": "2025-03-14T10:05:00Z",
     "updated_at": "2025-03-14T10:05:00Z"
@@ -73,6 +87,13 @@
       "temperature": 0.3,
       "max_tokens": 800
     },
+    "schema": {
+      "input": {
+        "type": "string",
+        "description": "The natural language instructions to convert",
+        "required": true
+      }
+    },
     "created_at": "2025-03-14T10:15:00Z",
     "updated_at": "2025-03-14T10:15:00Z"
   },
@@ -87,6 +108,38 @@
       "temperature": 0.4,
       "max_tokens": 1200
     },
+    "schema": {
+      "input": {
+        "type": "object",
+        "properties": {
+          "tool1_name": {
+            "type": "string",
+            "description": "The name of the first tool"
+          },
+          "tool1_description": {
+            "type": "string",
+            "description": "The description of the first tool"
+          },
+          "tool1_template": {
+            "type": "string",
+            "description": "The prompt template of the first tool"
+          },
+          "tool2_name": {
+            "type": "string",
+            "description": "The name of the second tool"
+          },
+          "tool2_description": {
+            "type": "string",
+            "description": "The description of the second tool"
+          },
+          "tool2_template": {
+            "type": "string",
+            "description": "The prompt template of the second tool"
+          }
+        },
+        "required": ["tool1_name", "tool1_description", "tool1_template", "tool2_name", "tool2_description", "tool2_template"]
+      }
+    },
     "created_at": "2025-03-14T10:20:00Z",
     "updated_at": "2025-03-14T10:20:00Z"
   },
@@ -100,6 +153,13 @@
     "parameters": {
       "temperature": 0.3,
       "max_tokens": 1000
+    },
+    "schema": {
+      "input": {
+        "type": "string",
+        "description": "The description of the tool for which to generate an input schema",
+        "required": true
+      }
     },
     "created_at": "2025-03-14T10:25:00Z",
     "updated_at": "2025-03-14T10:25:00Z"
@@ -129,6 +189,26 @@
       "temperature": 0.2,
       "max_tokens": 600
     },
+    "schema":{
+      "input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the tool"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the tool"
+          },
+          "prompt_template": {
+            "type": "string",
+            "description": "The prompt template of the tool"
+          }
+        },
+        "required": ["name", "description", "prompt_template"]
+      }
+    },
     "created_at": "2025-03-14T10:35:00Z",
     "updated_at": "2025-03-14T10:35:00Z"
   },
@@ -142,6 +222,30 @@
     "parameters": {
       "temperature": 0.2,
       "max_tokens": 2000
+    },
+    "schema": {
+      "input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the tool"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "The purpose of the tool"
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of the tool"
+          },
+          "features": {
+            "type": "string",
+            "description": "The features of the tool"
+          }
+        },
+        "required": ["name", "purpose", "type", "features"]
+      }
     },
     "created_at": "2025-03-14T10:00:00Z",
     "updated_at": "2025-03-14T10:00:00Z"
@@ -157,6 +261,13 @@
       "temperature": 0.3,
       "max_tokens": 1500
     },
+    "schema": {
+      "input": {
+        "type": "string",
+        "description": "The code to explain",
+        "required": true
+      }
+    },
     "created_at": "2025-03-14T10:05:00Z",
     "updated_at": "2025-03-13T18:45:54Z"
   },
@@ -170,6 +281,34 @@
     "parameters": {
       "temperature": 0.4,
       "max_tokens": 1800
+    },
+    "schema":{
+      "input": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the project"
+          },
+          "description": {
+            "type": "string",
+            "description": "A brief description of the project"
+          },
+          "features": {
+            "type": "string",
+            "description": "Key features of the project"
+          },
+          "setup": {
+            "type": "string",
+            "description": "Setup instructions for the project"
+          },
+          "usage": {
+            "type": "string",
+            "description": "Usage examples for the project"
+          }
+        },
+        "required": ["name", "description", "features", "setup", "usage"]
+      }
     },
     "created_at": "2025-03-14T10:10:00Z",
     "updated_at": "2025-03-14T10:10:00Z"
@@ -185,6 +324,13 @@
       "temperature": 0.3,
       "max_tokens": 1800
     },
+    "schema": {
+      "input": {
+        "type": "string",
+        "description": "The code or description of the API to document",
+        "required": true
+      }
+    },
     "created_at": "2025-03-14T10:15:00Z",
     "updated_at": "2025-03-14T10:15:00Z"
   },
@@ -198,6 +344,13 @@
     "parameters": {
       "temperature": 0.3,
       "max_tokens": 1000
+    },
+    "schema":{
+      "input": {
+        "type": "string",
+        "description": "The content to summarize",
+        "required": true
+      }
     },
     "created_at": "2025-03-14T10:20:00Z",
     "updated_at": "2025-03-14T10:20:00Z"
@@ -213,6 +366,34 @@
       "temperature": 0.6,
       "max_tokens": 1200
     },
+    "schema":{
+      "input": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "The subject of the email"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "The purpose of the email"
+          },
+          "points": {
+            "type": "string",
+            "description": "Key points to include in the email"
+          },
+          "tone": {
+            "type": "string",
+            "description": "The tone of the email"
+          },
+          "recipient": {
+            "type": "string",
+            "description": "The recipient of the email"
+          }
+        },
+        "required": ["subject", "purpose", "points", "tone", "recipient"]
+      }
+    },
     "created_at": "2025-03-14T10:25:00Z",
     "updated_at": "2025-03-14T10:25:00Z"
   },
@@ -226,6 +407,13 @@
     "parameters": {
       "temperature": 0.2,
       "max_tokens": 1500
+    },
+    "schema":{
+      "input": {
+        "type": "string",
+        "description": "The data to analyze",
+        "required": true
+      }
     },
     "created_at": "2025-03-14T10:30:00Z",
     "updated_at": "2025-03-14T10:30:00Z"
@@ -241,6 +429,30 @@
       "temperature": 0.2,
       "max_tokens": 1500
     },
+    "schema":{
+      "input":{
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the product or patch"
+          },
+          "description": {
+            "type": "string",
+            "description": "A brief description of the product or patch"
+          },
+          "features": {
+            "type": "string",
+            "description": "Key features of the product or patch"
+          },
+          "date": {
+            "type": "string",
+            "description": "The release date of the product or patch"
+          }
+        },
+        "required": ["name", "description", "features", "date"]
+      }
+    },
     "created_at": "2025-03-14T10:30:00Z",
     "updated_at": "2025-03-14T10:30:00Z"
   },
@@ -254,6 +466,13 @@
     "parameters": {
       "temperature": 0.7,
       "max_tokens": 1000
+    },
+    "schema": {
+      "input": {
+        "type": "string",
+        "description": "The message to send to the chatbot",
+        "required": true
+      }
     },
     "created_at": "2025-03-14T19:07:30Z",
     "updated_at": "2025-03-14T19:07:30Z"

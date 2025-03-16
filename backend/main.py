@@ -7,6 +7,8 @@ import logging
 from fastapi.middleware.cors import CORSMiddleware
 from routes.chat_routes import router as chat_router
 from routes.model_routes import router as model_router
+from routes.tool_routes import router as tool_router
+
 
 # Import our storage service
 from services.storage_service import load_tools as load_tools_json, save_tools as save_tools_json
@@ -18,6 +20,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 app.include_router(chat_router)
 app.include_router(model_router)
+app.include_router(tool_router)
 # Add CORS middleware if needed
 
 app.add_middleware(

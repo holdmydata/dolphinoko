@@ -12,31 +12,44 @@ import {
 } from "../utils/toolMonitoringStorage";
 import { useTools } from "../hooks/useTools";
 import { ensureChatTool } from "../utils/ensureTools";
-import ChatProcessor, {ProcessedMessage} from "../utils/ChatProcessor";
+import ChatProcessor, { ProcessedMessage } from "../utils/ChatProcessor";
 
 const Chat: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [selectedProvider, setSelectedProvider] = useState<string>("ollama");
-  const [executionEvents, setExecutionEvents] = useState<ToolExecutionEvent[]>(
-    []
-  );
+  const [executionEvents, setExecutionEvents] = useState<ToolExecutionEvent[]>([]);
   const [isMonitorExpanded, setIsMonitorExpanded] = useState<boolean>(false);
   const toolContext = useTools();
   const chatProcessorRef = useRef<ChatProcessor | null>(null);
-  const [messageProcessor, setMessageProcessor] = useState<
-    ((message: string) => Promise<ProcessedMessage>) | undefined
-  >(undefined);
-
+  const [messageProcessor, setMessageProcessor] = useState<((message: string) => Promise<ProcessedMessage>) | undefined>(undefined);
+ 
   // Providers available
   const providers = [
     { value: "ollama", label: "Ollama (Local)" },
     { value: "claude", label: "Claude (Anthropic)" },
   ];
 
-  // Initialize chat processor once tools are loaded
+  // Initialize chat processor and set message processor - SINGLE USEEFFECT
   useEffect(() => {
+    console.log("Tool context changed, tools count:", toolContext.tools.length);
     if (!toolContext.loading && toolContext.tools.length > 0) {
+      console.log("Initializing ChatProcessor with tools");
       chatProcessorRef.current = new ChatProcessor(toolContext.tools);
+      
+      // Create a properly typed message processor function
+      const processor = async (message: string): Promise<ProcessedMessage> => {
+        console.log("Processing message:", message);
+        if (!chatProcessorRef.current) {
+          console.log("No ChatProcessor available, returning default");
+          return { type: 'chat', content: message };
+        }
+        console.log("Using ChatProcessor to process message");
+        return await chatProcessorRef.current.processMessage(message);
+      };
+      
+      // Set the processor
+      setMessageProcessor(() => processor);
+      console.log("Message processor set");
     }
   }, [toolContext.loading, toolContext.tools]);
 
@@ -63,17 +76,9 @@ const Chat: React.FC = () => {
     }
   }, []);
 
-  // Process chat messages for tool intents
-  const processMessage = async (message: string) => {
-    if (!chatProcessorRef.current) {
-      return { type: "chat", content: message };
-    }
-
-    return await chatProcessorRef.current.processMessage(message);
-  };
-
   // Callback to add a new tool execution event
   const handleToolExecution = (event: ToolExecutionEvent) => {
+    console.log("Tool execution event:", event);
     // Add to state for immediate display
     setExecutionEvents((prev) => [event, ...prev]);
 
@@ -88,7 +93,7 @@ const Chat: React.FC = () => {
       setIsMonitorExpanded(true);
     }
   };
-
+  
   // Clear tool execution events
   const clearExecutionEvents = () => {
     if (
@@ -101,6 +106,11 @@ const Chat: React.FC = () => {
       clearStoredEvents(); // Also clear from storage
     }
   };
+
+  // Log when messageProcessor changes
+  useEffect(() => {
+    console.log("Message processor state updated:", !!messageProcessor);
+  }, [messageProcessor]);
 
   return (
     <div className="container mx-auto p-6">
@@ -183,6 +193,7 @@ const Chat: React.FC = () => {
             onToolExecution={handleToolExecution}
             messageProcessor={messageProcessor}
             toolContext={toolContext}
+            className="h-[75vh]"
           />
         </div>
       </div>
