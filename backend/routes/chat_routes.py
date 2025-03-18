@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 # Import services
 from services.ollama_service import OllamaService
+from services.memory_service import MemoryService
 
 # Create router
 router = APIRouter(
@@ -30,36 +31,38 @@ def get_ollama_service():
     return OllamaService()
 
 # Routes
-@router.post("/ollama", response_model=ChatMessageResponse)
+@router.post("/api/chat/ollama")
 async def chat_with_ollama(
-    request: ChatMessageRequest,
-    ollama_service: OllamaService = Depends(get_ollama_service)
+    request: dict,
+    memory_service: MemoryService = Depends(MemoryService.get_memory_service)
 ):
-    """Generate a chat response using Ollama"""
+    """Chat with Ollama model with memory integration"""
+    model = request.get("model")
+    message = request.get("message")
+    conversation_id = request.get("conversation_id")
+    parameters = request.get("parameters", {})
+    
+    if not model or not message:
+        raise HTTPException(status_code=400, detail="Model and message are required")
+    
     try:
-        # Verify model exists
-        model_exists = await ollama_service.check_model(request.model)
-        if not model_exists:
-            raise HTTPException(status_code=404, detail=f"Model '{request.model}' not found")
+        # Create Ollama service
+        ollama_service = OllamaService()
         
-        # Generate response
-        response = await ollama_service.generate(
-            model=request.model,
-            prompt=request.message,
-            parameters=request.parameters
-        )
+        # Generate response with memory if conversation_id is provided
+        if conversation_id:
+            result = await ollama_service.generate_with_memory(
+                model, 
+                message, 
+                conversation_id, 
+                memory_service, 
+                parameters
+            )
+        else:
+            result = await ollama_service.generate(model, message, parameters)
         
-        if "error" in response:
-            raise HTTPException(status_code=500, detail=response["error"])
-        
-        return {
-            "text": response["text"],
-            "model": request.model,
-            "metadata": response.get("metadata", {})
-        }
-    except HTTPException:
-        raise
+        return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate chat response: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
     
 

@@ -1,38 +1,12 @@
 // frontend/src/pages/Dashboard.tsx
 import React, { useState, useEffect } from 'react';
-import { LLMRequest, LLMResponse } from '../context/ToolContext';
+import { LLMRequest, LLMResponse, Tool } from '../context/ToolContext';
 import { useTools } from '../hooks/useTools';
-
-// Predefined categories and subcategories
-const CATEGORIES = [
-  {
-    name: 'Development',
-    subcategories: ['Code Generation', 'Documentation', 'Testing', 'Debugging'],
-    icon: '💻'
-  },
-  {
-    name: 'Productivity',
-    subcategories: ['Writing', 'Research', 'Organization', 'Communication'],
-    icon: '⏱️'
-  },
-  {
-    name: 'Data',
-    subcategories: ['Analysis', 'Visualization', 'Cleaning', 'Transformation'],
-    icon: '📊'
-  },
-  {
-    name: 'Content',
-    subcategories: ['Creation', 'Editing', 'SEO', 'Translation'],
-    icon: '✏️'
-  },
-  {
-    name: 'Entertainment',
-    subcategories: ['Comedy', 'Storytelling', 'Games', 'Trivia'],
-    icon: '🎮'
-  }
-];
+import { CATEGORIES } from '../types/categories';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { tools, runTool } = useTools();
   const [selectedToolId, setSelectedToolId] = useState<string>('');
   const [input, setInput] = useState<string>('');
@@ -98,6 +72,32 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveResponseAsTool = (response: LLMResponse) => {
+    // Create a basic tool from the response
+    const newTool: Partial<Tool> = {
+      name: `Generated Tool from ${selectedTool?.name || 'Dashboard'}`,
+      description: `Tool created from a response on ${new Date().toLocaleDateString()}`,
+      category: selectedTool?.category || 'Development',
+      subcategory: selectedTool?.subcategory || 'Code Generation',
+      provider: response.metadata.provider,
+      model: response.metadata.model,
+      system_prompt: `You are a helpful assistant that generates responses based on user input. 
+  The following is an example of a good response that should be emulated:
+  
+  ${response.output}
+  
+  Try to maintain a similar style and quality in your responses.`,
+      prompt_template: input,
+      // Other fields will be filled in on the tool edit page
+    };
+    
+    // Store the tool data in localStorage to pre-fill the form
+    localStorage.setItem('new_tool_template', JSON.stringify(newTool));
+    
+    // Navigate to the tool builder with a parameter indicating to load from template
+    navigate('/tools/new?from_template=true');
   };
 
   // Get available subcategories for the selected category
@@ -319,15 +319,41 @@ const Dashboard: React.FC = () => {
           <div className="p-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Tool Playground</h2>
-              {selectedTool && (
-                <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-md flex items-center text-sm">
-                  <span className="mr-1">
-                    {CATEGORIES.find(c => c.name === selectedTool.category)?.icon || '🔧'}
-                  </span> 
-                  {selectedTool.name}
-                </div>
-              )}
+              
+              {/* Quick actions */}
+              <div className="flex space-x-2">
+                {selectedTool && (
+                  <button
+                    onClick={() => navigate(`/tools/improve/${selectedTool.id}`)}
+                    className="flex items-center px-3 py-1.5 text-sm bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-800/30"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Improve This Tool
+                  </button>
+                )}
+                <button
+                  onClick={() => navigate('/tools/organize')}
+                  className="flex items-center px-3 py-1.5 text-sm bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-md hover:bg-green-100 dark:hover:bg-green-800/30"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                  </svg>
+                  Organize Tools
+                </button>
+              </div>
             </div>
+            
+            {selectedTool && (
+              <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-md flex items-center text-sm mb-4">
+                <span className="mr-1">
+                  {CATEGORIES.find(c => c.name === selectedTool.category)?.icon || '🔧'}
+                </span> 
+                {selectedTool.name}
+              </div>
+            )}
+            
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
               <textarea
                 value={input}
@@ -384,8 +410,8 @@ const Dashboard: React.FC = () => {
                   {response.output}
                 </pre>
                 
-                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
-                  <div className="flex flex-wrap gap-2">
+                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-2">
                     <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-700 dark:text-gray-300">
                       Provider: {response.metadata.provider}
                     </span>
@@ -396,6 +422,17 @@ const Dashboard: React.FC = () => {
                       Processing time: {response.metadata.processing_time.toFixed(2)}s
                     </span>
                   </div>
+                  
+                  {/* Save as tool button */}
+                  <button
+                    onClick={() => handleSaveResponseAsTool(response)}
+                    className="flex items-center px-3 py-1.5 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Save as New Tool
+                  </button>
                 </div>
               </div>
             ) : (

@@ -8,16 +8,9 @@ import {
 } from "../../context/ToolContext";
 import { ToolExecutionEvent } from "./ToolMonitor";
 import { ensureChatTool } from "../../utils/ensureTools";
-import { v4 as uuidv4 } from "uuid"; // Make sure you have this import
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  toolExecution?: ToolExecutionEvent;
-}
-
+import { v4 as uuidv4, v4 } from "uuid";
+import { useConversation } from "../../context/ConversationContext";
+import { Message as ApiMessage } from "../../utils/api";
 // Add these type definitions
 interface ProcessedMessage {
   type: "chat" | "tool" | "parameter_request";
@@ -47,21 +40,32 @@ interface ParameterCollectionState {
 interface ChatInterfaceProps {
   modelName: string;
   provider: string;
+  conversationId: string | null;
+  messages: UIMessage[];
+  isLoading: boolean;
   className?: string;
   onToolExecution: (event: ToolExecutionEvent) => void;
   messageProcessor?: (message: string) => Promise<ProcessedMessage>;
   toolContext?: ToolContext;
+  sendMessage?: (content: string, toolId?: string) => Promise<void>;
+}
+
+// Extended message type for UI needs
+interface UIMessage extends ApiMessage {
+  timestamp: Date; // Override timestamp to be a Date instead of string
+  toolExecution?: ToolExecutionEvent;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
   modelName,
   provider,
+  conversationId,
   className = "",
   onToolExecution,
   messageProcessor, // Add this parameter
 }) => {
   const toolContext = useContext(ToolContext);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<UIMessage[]>([]);
   const [input, setInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,9 +99,34 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [provider, modelName, toolContext]);
 
+  // Load conversation on initial mount if conversationId exists
+  useEffect(() => {
+    if (conversationId) {
+      // Load messages from existing conversation
+      api
+        .get<{ messages: ApiMessage[] }>(`/api/conversations/${conversationId}`)
+        .then((response) => {
+          // Convert API message format to your internal format
+          const convertedMessages: UIMessage[] = response.messages.map(
+            (apiMsg) => ({
+              id: apiMsg.id,
+              role: apiMsg.role as "user" | "assistant",
+              content: apiMsg.content,
+              timestamp: new Date(apiMsg.timestamp),
+              // Map other fields if needed
+            })
+          );
+          setMessages(convertedMessages);
+        })
+        .catch((err) => {
+          console.error("Failed to load conversation:", err);
+        });
+    }
+  }, [conversationId]);
+
   // Generate a unique ID
   const generateId = (): string => {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return uuidv4();
   };
 
   // Format timestamp
@@ -119,7 +148,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     // Create user message
     const messageId = generateId();
-    const userMessage: Message = {
+    const userMessage: UIMessage = {
       id: messageId,
       role: "user",
       content: input.trim(),
@@ -131,6 +160,34 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setInput("");
     setError(null);
     setIsLoading(true);
+
+    // Store user message in Neo4j
+    if (conversationId) {
+      try {
+        // Create a simplified message object with only the fields the server expects
+        const messageData = {
+          content: userMessage.content,
+          role: userMessage.role,
+          // Don't include other fields like timestamp that might cause issues
+        };
+
+        console.log("Sending message to server:", messageData);
+
+        await api.post(
+          `/api/conversations/${conversationId}/messages`,
+          messageData
+        );
+      } catch (persistError) {
+        console.error(
+          "Failed to store user message in conversation:",
+          persistError
+        );
+        if (persistError.response) {
+          console.error("Server response:", persistError.response.data);
+        }
+        // We continue with the flow despite persistence errors
+      }
+    }
 
     // Try to process with message processor first (for tool detection)
     if (messageProcessor) {
@@ -161,7 +218,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     // If no tool was triggered or no processor is available, proceed with normal chat
     if (!modelName) {
-      const errorMessage: Message = {
+      const errorMessage: UIMessage = {
         id: generateId(),
         role: "assistant",
         content: "Please select a model first.",
@@ -204,6 +261,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             temperature: 0.7,
             max_tokens: 1000,
           },
+          // Add conversation_id for memory
+          conversation_id: conversationId || v4(),
         };
 
         // Create and track the tool execution event
@@ -256,6 +315,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               temperature: 0.7,
               max_tokens: 1000,
             },
+            // Add conversation_id for memory
+            conversation_id: conversationId,
           });
         } else {
           // Fallback to generic endpoint
@@ -266,6 +327,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               model: modelName,
               provider: provider,
             },
+            // Add conversation_id for memory
+            conversation_id: conversationId,
           });
         }
 
@@ -294,7 +357,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
 
       // Add assistant response to chat
-      const assistantMessage: Message = {
+      const assistantMessage: UIMessage = {
         id: generateId(),
         role: "assistant",
         content: response.text || response.output || "No response received",
@@ -405,7 +468,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       onToolExecution(successExecution);
 
       // Add assistant message
-      const assistantMessage: Message = {
+      const assistantMessage: UIMessage = {
         id: generateId(),
         role: "assistant",
         content: response.output,
@@ -418,7 +481,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.error("Tool execution failed:", error);
       console.log("Error details:", error.message, error.stack);
 
-      // Create error execution
+      // Create error execution (this part is correct)
       const errorExecution: ToolExecutionEvent = {
         id: executionId,
         toolId: processed.toolId,
@@ -438,7 +501,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       onToolExecution(errorExecution);
 
       // Add error message
-      const errorMessage: Message = {
+      const errorMessage: UIMessage = {
+        // Use UIMessage here
         id: generateId(),
         role: "assistant",
         content: `Error executing tool: ${error.message || "Unknown error"}`,
@@ -447,6 +511,54 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       };
 
       setMessages((prev) => [...prev, errorMessage]);
+
+      // Store in Neo4j - here's where you had errors
+      if (conversationId) {
+        try {
+          // Ensure metadata is a valid object and safely extract properties
+          const safeMetadata: Record<string, any> = {};
+
+          // Only add metrics if they exist
+          if (
+            errorExecution.metrics &&
+            typeof errorExecution.metrics === "object"
+          ) {
+            // Copy simple properties that will serialize correctly
+            Object.keys(errorExecution.metrics).forEach((key) => {
+              const value = errorExecution.metrics[key];
+              // Only include primitive values and simple objects
+              if (
+                value !== undefined &&
+                (typeof value === "string" ||
+                  typeof value === "number" ||
+                  typeof value === "boolean" ||
+                  (typeof value === "object" &&
+                    value !== null &&
+                    !Array.isArray(value)))
+              ) {
+                safeMetadata[key] = value;
+              }
+            });
+          }
+
+          // Add error information to metadata
+          safeMetadata.error_message = error.message || "Unknown error";
+          safeMetadata.error_timestamp = new Date().toISOString();
+
+          await api.post(`/api/conversations/${conversationId}/messages`, {
+            content: errorMessage.content,
+            role: errorMessage.role,
+            tool_id: errorExecution.toolId,
+            metadata: safeMetadata,
+          });
+        } catch (persistError) {
+          console.error(
+            "Failed to store error message in conversation:",
+            persistError
+          );
+          console.error("Error details:", persistError.message);
+        }
+      }
     }
   };
   // Submit parameters for a tool
@@ -491,7 +603,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         onToolExecution(executionEvent);
 
         // Add assistant message
-        const assistantMessage: Message = {
+        const assistantMessage: UIMessage = {
           id: generateId(),
           role: "assistant",
           content: response.output,
@@ -504,7 +616,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         console.error("Parameter submission failed:", error);
 
         // Add error message
-        const errorMessage: Message = {
+        const errorMessage: UIMessage = {
           id: generateId(),
           role: "assistant",
           content: `Error: ${error.message || "Unknown error"}`,
@@ -716,7 +828,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             </span>
                           </div>
                         )}
-
+                        {message.toolExecution?.metrics?.used_memories > 0 && (
+                          <div className="mb-1 text-emerald-700">
+                            <span className="font-medium">Memory:</span> Used{" "}
+                            {message.toolExecution.metrics.used_memories}{" "}
+                            relevant memories
+                          </div>
+                        )}
                         {message.toolExecution.metrics.eval_count !==
                           undefined && (
                           <div>

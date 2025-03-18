@@ -11,23 +11,37 @@ import {
   clearStoredEvents,
 } from "../utils/toolMonitoringStorage";
 import { useTools } from "../hooks/useTools";
+import { useConversation } from "../context/ConversationContext";
 import { ensureChatTool } from "../utils/ensureTools";
 import ChatProcessor, { ProcessedMessage } from "../utils/ChatProcessor";
 
 const Chat: React.FC = () => {
+  const [input, setInput] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [selectedProvider, setSelectedProvider] = useState<string>("ollama");
-  const [executionEvents, setExecutionEvents] = useState<ToolExecutionEvent[]>([]);
+  const [executionEvents, setExecutionEvents] = useState<ToolExecutionEvent[]>(
+    []
+  );
   const [isMonitorExpanded, setIsMonitorExpanded] = useState<boolean>(false);
   const toolContext = useTools();
   const chatProcessorRef = useRef<ChatProcessor | null>(null);
-  const [messageProcessor, setMessageProcessor] = useState<((message: string) => Promise<ProcessedMessage>) | undefined>(undefined);
- 
+  const [messageProcessor, setMessageProcessor] = useState<
+    ((message: string) => Promise<ProcessedMessage>) | undefined
+  >(undefined);
+
   // Providers available
   const providers = [
     { value: "ollama", label: "Ollama (Local)" },
     { value: "claude", label: "Claude (Anthropic)" },
   ];
+
+  const {
+    currentConversationId,
+    messages,
+    isLoading,
+    createNewConversation,
+    sendMessage,
+  } = useConversation();
 
   // Initialize chat processor and set message processor - SINGLE USEEFFECT
   useEffect(() => {
@@ -35,18 +49,18 @@ const Chat: React.FC = () => {
     if (!toolContext.loading && toolContext.tools.length > 0) {
       console.log("Initializing ChatProcessor with tools");
       chatProcessorRef.current = new ChatProcessor(toolContext.tools);
-      
+
       // Create a properly typed message processor function
       const processor = async (message: string): Promise<ProcessedMessage> => {
         console.log("Processing message:", message);
         if (!chatProcessorRef.current) {
           console.log("No ChatProcessor available, returning default");
-          return { type: 'chat', content: message };
+          return { type: "chat", content: message };
         }
         console.log("Using ChatProcessor to process message");
         return await chatProcessorRef.current.processMessage(message);
       };
-      
+
       // Set the processor
       setMessageProcessor(() => processor);
       console.log("Message processor set");
@@ -93,7 +107,7 @@ const Chat: React.FC = () => {
       setIsMonitorExpanded(true);
     }
   };
-  
+
   // Clear tool execution events
   const clearExecutionEvents = () => {
     if (
@@ -106,6 +120,15 @@ const Chat: React.FC = () => {
       clearStoredEvents(); // Also clear from storage
     }
   };
+
+  useEffect(() => {
+    if (!currentConversationId && !isLoading) {
+      console.log("Creating new conversation");
+      createNewConversation()
+        .then((id) => console.log("Created conversation:", id))
+        .catch((err) => console.error("Failed to create conversation:", err));
+    }
+  }, [currentConversationId, isLoading, createNewConversation]);
 
   // Log when messageProcessor changes
   useEffect(() => {
@@ -194,6 +217,11 @@ const Chat: React.FC = () => {
             messageProcessor={messageProcessor}
             toolContext={toolContext}
             className="h-[75vh]"
+            // Add these props
+            conversationId={currentConversationId}
+            messages={messages}
+            isLoading={isLoading}
+            sendMessage={sendMessage}
           />
         </div>
       </div>

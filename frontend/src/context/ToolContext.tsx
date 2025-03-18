@@ -11,7 +11,9 @@ export interface Tool {
   provider: string;
   model: string;
   prompt_template: string;
+  system_prompt: string;
   activation_phrases?: string[];
+  version: number;
   parameters: {
     temperature: number;
     max_tokens: number;
@@ -28,6 +30,9 @@ export interface LLMRequest {
   tool_id: string;
   input: string | Record<string, any>;
   parameters?: any;
+  metadata?: any;
+  conversation_id?: string;
+  [key: string]: any;
 }
 
 export interface LLMResponse {

@@ -178,3 +178,35 @@ cython_debug/
 
 # Frontend
 node_modules/
+
+# Storage
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-shm
+*.db
+*.db-journal
+*.db-shm
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+*.log.*
+*.log-*
+*.log/*
+*.log.txt
+*.log.json
+
+# Cache
+__pycache__/
+.cache/
+.cache-*
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+

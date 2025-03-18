@@ -5,27 +5,36 @@ import uuid
 import time
 import logging
 from fastapi.middleware.cors import CORSMiddleware
+from services.storage_service import load_tools as load_tools_json, save_tools as save_tools_json
+from services.neo4j_service import Neo4jService
+from dependencies import neo4j_service
+
 from routes.chat_routes import router as chat_router
+from routes.conversation_routes import router as conversation_router
 from routes.model_routes import router as model_router
 from routes.tool_routes import router as tool_router
-
-
-# Import our storage service
-from services.storage_service import load_tools as load_tools_json, save_tools as save_tools_json
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
+neo4j_service = Neo4jService()
+if neo4j_service.driver:
+    neo4j_service.initialize_schema()
+else:
+    logger.error("Failed to initialize Neo4j schema")
+    
+    
+# Create FastAPI app
 app = FastAPI()
 app.include_router(chat_router)
+app.include_router(conversation_router)
 app.include_router(model_router)
 app.include_router(tool_router)
-# Add CORS middleware if needed
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # Add your frontend URL
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://0.0.0.0:7687", "http://localhost:8000"],  # Add your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -18,6 +18,44 @@ class ApiError extends Error {
   }
 }
 
+export interface Message {
+  id: string;
+  content: string;
+  role: string;
+  timestamp: Date;
+  tool_id?: string;
+  metadata?: any;
+}
+
+export interface Conversation {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  messages: Message[];
+}
+
+export interface MessageCreate {
+  content: string;
+  role: string;
+  tool_id?: string;
+  metadata?: any;
+}
+
+// Conversation API functions
+export const conversations = {
+  // Create a new conversation
+  create: (): Promise<Conversation> => 
+    api.post<Conversation>('/api/conversations', {}),
+  
+  // Get a conversation by ID
+  get: (id: string): Promise<Conversation> => 
+    api.get<Conversation>(`/api/conversations/${id}`),
+  
+  // Add a message to a conversation
+  addMessage: (conversationId: string, message: MessageCreate): Promise<Message> => 
+    api.post<Message>(`/api/conversations/${conversationId}/messages`, message),
+};
+
 // Generic request handler
 async function request<T>(
   endpoint: string, 
@@ -122,3 +160,5 @@ export const useApi = () => {
     handleApiError,
   };
 };
+
+
