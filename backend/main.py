@@ -4,10 +4,10 @@ from typing import List, Dict, Any, Optional
 import uuid
 import time
 import logging
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from services.storage_service import load_tools as load_tools_json, save_tools as save_tools_json
-from services.neo4j_service import Neo4jService
-from dependencies import neo4j_service
+from services.sqlite_storage import SQLiteStorage
 
 from routes.chat_routes import router as chat_router
 from routes.conversation_routes import router as conversation_router
@@ -17,20 +17,58 @@ from routes.tool_routes import router as tool_router
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-neo4j_service = Neo4jService()
-if neo4j_service.driver:
-    neo4j_service.initialize_schema()
+
+# Initialize storage service based on configuration
+# Check environment variable for Neo4j toggle (will be replaced by frontend setting later)
+enable_neo4j = os.getenv("ENABLE_NEO4J", "false").lower() == "true"
+
+if enable_neo4j:
+    try:
+        from services.neo4j_service import Neo4jService
+        storage_service = Neo4jService()
+        if not storage_service.driver:
+            logger.warning("Failed to connect to Neo4j, falling back to SQLite")
+            storage_service = SQLiteStorage()
+            storage_service.initialize_schema()
+        else:
+            storage_service.initialize_schema()
+            logger.info("Successfully initialized Neo4j schema")
+    except Exception as e:
+        logger.error(f"Error initializing Neo4j: {str(e)}, falling back to SQLite")
+        storage_service = SQLiteStorage()
+        storage_service.initialize_schema()
 else:
-    logger.error("Failed to initialize Neo4j schema")
+    logger.info("Using SQLite for storage (Neo4j disabled)")
+    storage_service = SQLiteStorage()
+    storage_service.initialize_schema()
     
+try:
+    # Check if we already have tools in the storage
+    existing_tools = storage_service.get_tools()
     
+    if not existing_tools:
+        logger.info("No tools found in database, loading from JSON file")
+        
+        # Load tools from JSON file
+        json_tools = load_tools_json()
+        
+        # Save each tool to the database
+        for tool in json_tools:
+            storage_service.save_tool(tool)
+            
+        logger.info(f"Loaded {len(json_tools)} tools from JSON into database")
+    else:
+        logger.info(f"Found {len(existing_tools)} tools in database")
+except Exception as e:
+    logger.error(f"Error loading tools into database: {str(e)}")
+    
+
 # Create FastAPI app
 app = FastAPI()
 app.include_router(chat_router)
 app.include_router(conversation_router)
 app.include_router(model_router)
 app.include_router(tool_router)
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -68,6 +106,18 @@ _tools_data = load_tools_json()
 tools_db: List[ToolConfig] = [ToolConfig(**tool) for tool in _tools_data]
 logger.info(f"Loaded {len(tools_db)} tools from storage")
 
+# Endpoint to get storage configuration
+@app.get("/api/system/config")
+async def get_system_config():
+    """Get system configuration - useful for frontend to know what's enabled"""
+    return {
+        "storage": {
+            "type": "neo4j" if enable_neo4j else "sqlite",
+            "neo4j_enabled": enable_neo4j
+        },
+        "version": "0.1.0"
+    }
+
 # Tool endpoints
 @app.get("/api/tools")
 async def get_tools():
@@ -101,6 +151,10 @@ async def create_tool(tool: ToolConfig):
     
     # Save to JSON file
     save_tools_json([t.dict() for t in tools_db])
+    
+    # Also save to persistent storage
+    tool_dict = new_tool.dict()
+    storage_service.save_tool(tool_dict)
     
     logger.info(f"Created tool with ID: {new_tool.id}")
     logger.info(f"Tools in DB now: {len(tools_db)}")
@@ -137,6 +191,9 @@ async def update_tool(tool_id: str, updated_tool: ToolConfig):
     
     # Save to JSON file
     save_tools_json([t.dict() for t in tools_db])
+    
+    # Also update in persistent storage
+    storage_service.save_tool(tool_dict)
     
     logger.info(f"Updated tool with ID: {tool_id}")
     

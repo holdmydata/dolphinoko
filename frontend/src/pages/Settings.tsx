@@ -12,6 +12,7 @@ interface Settings {
   };
   theme: "light" | "dark" | "system";
   defaultProvider: string;
+  enableNeo4j: boolean;
 }
 
 const Settings: React.FC = () => {
@@ -27,6 +28,7 @@ const Settings: React.FC = () => {
     },
     theme: "light",
     defaultProvider: "ollama",
+    enableNeo4j: false,
   };
 
   // Load settings from localStorage or use defaults
@@ -62,10 +64,11 @@ const Settings: React.FC = () => {
 
   // Handle input changes
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | 
+    { target: { name: string, value: string | boolean } }
   ) => {
     const { name, value } = e.target;
-
+  
     // Handle nested properties
     if (name.includes(".")) {
       const [section, key] = name.split(".");
@@ -82,12 +85,12 @@ const Settings: React.FC = () => {
         [name]: value,
       }));
     }
-
+  
     // If theme is being changed, update it in ThemeContext
-    if (name === "theme") {
+    if (name === "theme" && typeof value === "string") {
       setTheme(value as "light" | "dark" | "system");
     }
-
+  
     // Reset saved status
     setIsSaved(false);
   };
@@ -232,7 +235,40 @@ const Settings: React.FC = () => {
             </select>
           </div>
         </section>
+        <section className="mb-8">
+          <h2 className="text-xl text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
+            Database Options
+          </h2>
 
+          <div className="flex items-center mb-4">
+            <input
+              type="checkbox"
+              id="enableNeo4j"
+              name="enableNeo4j"
+              checked={settings.enableNeo4j}
+              onChange={(e) =>
+                handleChange({
+                  target: {
+                    name: "enableNeo4j",
+                    value: e.target.checked,
+                  },
+                })
+              }
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="enableNeo4j"
+              className="ml-2 block text-gray-700 dark:text-gray-300"
+            >
+              Enable Neo4j Graph Database (Optional)
+            </label>
+          </div>
+
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Neo4j provides advanced graph capabilities, but requires separate
+            installation. SQLite is used by default.
+          </p>
+        </section>
         {/* Actions */}
         <div className="flex justify-between items-center">
           <button

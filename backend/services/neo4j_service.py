@@ -3,11 +3,12 @@ import os
 import logging
 from neo4j import GraphDatabase
 import json
+from .storage_interface import StorageInterface
 
 logger = logging.getLogger(__name__)
 
 
-class Neo4jService:
+class Neo4jService(StorageInterface):
     def __init__(self):
         """Initialize Neo4j connection using environment variables"""
         uri = os.getenv("NEO4J_URI", "bolt://127.0.0.1:7687")

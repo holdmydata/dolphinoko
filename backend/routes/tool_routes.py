@@ -5,11 +5,12 @@ from typing import Dict, Any, Optional, List
 import logging
 from uuid import uuid4
 from datetime import datetime
+import os
 
 # Import your services
-from services.neo4j_service import Neo4jService
 from services.memory_service import MemoryService
 from services.ollama_service import OllamaService
+from services.sqlite_storage import SQLiteStorage
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -32,13 +33,31 @@ class ToolExecutionResponse(BaseModel):
     metadata: Dict[str, Any] = {}
     message_id: Optional[str] = None  # Return message ID if saved to conversation
 
-# Get services
-def get_neo4j_service():
-    service = Neo4jService()
+# Initialize storage service
+# Check environment variable for Neo4j toggle (will be replaced by frontend setting later)
+enable_neo4j = os.getenv("ENABLE_NEO4J", "false").lower() == "true"
+
+if enable_neo4j:
     try:
-        yield service
+        from services.neo4j_service import Neo4jService
+        storage_service = Neo4jService()
+        if not storage_service.driver:
+            logger.warning("Failed to connect to Neo4j, falling back to SQLite")
+            storage_service = SQLiteStorage()
+    except Exception as e:
+        logger.error(f"Error initializing Neo4j: {str(e)}, falling back to SQLite")
+        storage_service = SQLiteStorage()
+else:
+    storage_service = SQLiteStorage()
+    storage_service.initialize_schema()
+
+# Service dependencies
+def get_storage_service():
+    """Dependency provider for storage service"""
+    try:
+        yield storage_service
     finally:
-        service.close()
+        pass  # Connection kept open for app lifecycle
 
 def get_memory_service():
     service = MemoryService()
@@ -48,21 +67,23 @@ def get_ollama_service():
     service = OllamaService()
     yield service
 
-# Get tools function from Neo4j
-def get_tools(neo4j_service: Neo4jService = Depends(get_neo4j_service)):
-    return neo4j_service.get_tools()
+# Get tools function using storage_service
+@router.get("", response_model=List[Dict[str, Any]])
+def get_tools():
+    """Get all tools from storage"""
+    return storage_service.get_tools()
 
 @router.post("/execute", response_model=ToolExecutionResponse)
 async def execute_tool(
     request: ToolExecutionRequest,
-    neo4j_service: Neo4jService = Depends(get_neo4j_service),
+    storage_service = Depends(get_storage_service),
     memory_service: MemoryService = Depends(get_memory_service),
     ollama_service: OllamaService = Depends(get_ollama_service)
 ):
     """Execute a tool with the given input"""
     try:
         # Get all tools
-        tools = neo4j_service.get_tools()
+        tools = storage_service.get_tools()
         
         # Find the tool
         tool = next((t for t in tools if t["id"] == request.tool_id), None)
@@ -146,9 +167,9 @@ async def execute_tool(
                 }
             }
             
-            # Save to Neo4j
-            neo4j_service.save_message(request.conversation_id, user_message)
-            neo4j_service.save_message(request.conversation_id, assistant_message)
+            # Save to storage service
+            storage_service.save_message(request.conversation_id, user_message)
+            storage_service.save_message(request.conversation_id, assistant_message)
             
             # Save to memory
             timestamp = datetime.now().isoformat()
