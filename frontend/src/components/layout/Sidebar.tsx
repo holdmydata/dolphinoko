@@ -1,149 +1,257 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useCharacter, Character } from "../../context/CharacterContext";
 
 interface SidebarProps {
   isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  toggleSidebar: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-  // Navigation links
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
+  const location = useLocation();
+  const { characters } = useCharacter();
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Check if we're on mobile on component mount and window resize
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  // Update navLinks with farm theme icons
   const navLinks = [
-    { to: '/', label: 'Dashboard', icon: 'home' },
-    { to: '/tools', label: 'Tool Builder', icon: 'tools' },
-    { to: '/chat', label: 'Chat', icon: 'chat' },
-    { to: '/monitoring', label: 'Monitoring', icon: 'monitoring' },
-    { to: '/settings', label: 'Settings', icon: 'settings' },
+    { to: "/", label: "Farm Home", icon: "🏡" },
+    { to: "/character-creator", label: "Character Creator", icon: "🧸" },
+    { to: "/dashboard", label: "Dashboard", icon: "📊" },
+    { to: "/tools", label: "Tool Shed", icon: "🔧" },
+    { to: "/chat", label: "Farmer's Chat", icon: "💬" }
   ];
 
-  // Icon components based on name (unchanged as these are SVGs)
-  const icons: Record<string, JSX.Element> = {
-    home: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-        />
-      </svg>
-    ),
-    tools: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"
-        />
-      </svg>
-    ),
-    chat: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-        />
-      </svg>
-    ),
-    monitoring: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M13 10V3L4 14h7v7l9-11h-7z"
-          />
-      </svg>
-    ),
-    settings: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-        />
-      </svg>
-    ),
-  };
+  // Display first 3 characters in the sidebar
+  const displayedCharacters = characters.slice(0, 3);
 
-  // Close sidebar when clicking outside on mobile
-  const handleOverlayClick = () => {
-    if (isOpen) {
-      setIsOpen(false);
-    }
+  // Farm-themed expressions for characters
+  const getRandomExpression = () => {
+    const expressions = ['🌱', '🌾', '🌿', '🍃', '🌻'];
+    return expressions[Math.floor(Math.random() * expressions.length)];
   };
 
   return (
-    <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-gray-600 dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 lg:hidden"
-          onClick={handleOverlayClick}
-        ></div>
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 shadow-lg transform ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto`}
+    <aside className={`sidebar fixed h-screen transition-all duration-300 z-30 overflow-hidden flex flex-col
+                     ${isOpen ? 'w-64 translate-x-0' : 'w-20 md:translate-x-0'} 
+                     ${!isOpen && isMobile ? '-translate-x-full' : ''}
+                     bg-farm-earth-light border-r border-farm-brown`}>
+      
+      {/* Toggle button for desktop - styled as a wooden post */}
+      <button 
+        onClick={toggleSidebar}
+        className="hidden md:flex absolute bottom-20 right-0 z-10 p-1.5 rounded-l-md 
+                   bg-farm-wood-light text-farm-brown border-farm-brown 
+                   shadow-md hover:shadow-lg transition-all 
+                   duration-200 hover:translate-x-0.5 active:translate-x-0 
+                   border border-r-0 items-center justify-center"
+        aria-label={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+        style={{ width: "24px", height: "32px" }}
       >
-        <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-6">
-          <div className="text-xl font-bold text-gray-800 dark:text-white flex items-center">
-            <svg className="h-6 w-6 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" strokeWidth="2"/>
-              <path d="M15.5 9.5L11 14L8.5 11.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Dolphinoko
-          </div>
-        </div>
-
-        <nav className="mt-6 px-4">
-          <div className="space-y-1">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) =>
-                  `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                    isActive
-                      ? 'bg-gray-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                  }`
-                }
-              >
-                <span className="mr-3">{icons[link.icon]}</span>
-                {link.label}
-              </NavLink>
-            ))}
-          </div>
-        </nav>
-
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="bg-gray-50 dark:bg-gray-900/30 p-3 rounded-lg">
-            <h5 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">Local Models Active</h5>
-            <div className="flex items-center text-xs text-blue-600 dark:text-blue-400">
-              <span className="flex h-2 w-2 relative mr-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 dark:bg-gray-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-gray-500 dark:bg-gray-400"></span>
-              </span>
-              Ollama running on localhost
-            </div>
-          </div>
+        <svg className="w-4 h-4 text-farm-brown" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          {isOpen ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7" />
+          )}
+        </svg>
+      </button>
+      
+      {/* Header */}
+      <div className="bg-farm-brown text-white flex items-center p-4 border-b border-farm-brown-dark">
+        <div className="text-xl font-bold flex items-center">
+          <span className="text-2xl mr-2">🌾</span>
+          {isOpen && "Dolphinoko Farm"}
         </div>
       </div>
-    </>
+      
+      {/* Characters section */}
+      <div className="p-4 border-b border-farm-brown bg-farm-blue-light/20">
+        {isOpen && (
+          <h2 className="text-sm font-medium text-farm-brown mb-3 flex items-center">
+            <span className="mr-2">🐄</span>Farm Friends
+          </h2>
+        )}
+        
+        <div className="flex flex-col space-y-3">
+          {displayedCharacters.map((character: Character) => (
+            <motion.div 
+              key={character.id}
+              className={`flex items-center rounded-lg transition-colors cursor-pointer relative
+                ${isOpen ? 'p-2' : 'p-2 justify-center'}
+                ${location.pathname === `/character/${character.id}` 
+                  ? 'bg-farm-blue-light/50 border-l-4 border-farm-blue shadow-sm' 
+                  : 'hover:bg-white/60'}`}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {!isOpen && location.pathname === `/character/${character.id}` && (
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-farm-blue rounded-r-full"></div>
+              )}
+              <motion.div 
+                className={`w-10 h-10 min-w-[2.5rem] rounded-lg flex items-center justify-center overflow-hidden shadow-sm relative
+                  ${location.pathname === `/character/${character.id}` ? 'ring-2 ring-farm-blue' : ''}`}
+                style={{ 
+                  backgroundColor: character.color,
+                  borderRadius: location.pathname === `/character/${character.id}`
+                    ? "50% 50% 50% 50% / 50% 50% 50% 50%"
+                    : "30% 70% 70% 30% / 30% 30% 70% 70%"
+                }}
+                whileHover={{ 
+                  scale: 1.1,
+                  borderRadius: "40% 60% 60% 40% / 40% 40% 60% 60%" 
+                }}
+                transition={{ duration: 0.4 }}
+              >
+                <span className="text-xl relative z-10">
+                  {character.type === 'cat' ? '🐱' : 
+                   character.type === 'dog' ? '🐶' :
+                   character.type === 'bird' ? '🐦' :
+                   character.type === 'rabbit' ? '🐰' :
+                   character.type === 'fox' ? '🦊' :
+                   character.type === 'bear' ? '🐻' : '🐾'}
+                </span>
+                <div className="absolute inset-0 bg-white opacity-10 rounded-full"></div>
+              </motion.div>
+              
+              {isOpen && (
+                <div className="ml-3">
+                  <div className="text-sm font-medium text-farm-brown">{character.name}</div>
+                  <div className="text-xs text-farm-earth flex items-center">
+                    <span className="mr-1">{character.role}</span>
+                    <span>{getRandomExpression()}</span>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          ))}
+          
+          {isOpen && (
+            <Link 
+              to="/character-creator" 
+              className="flex items-center justify-center p-2 mt-2 rounded-lg bg-farm-green-light/30 hover:bg-farm-green-light/50 border border-dashed border-farm-green text-farm-brown transition-colors"
+            >
+              <motion.div
+                className="w-8 h-8 rounded-lg flex items-center justify-center bg-farm-green-light/50"
+                style={{ borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%" }}
+                whileHover={{ 
+                  scale: 1.1, 
+                  borderRadius: "40% 60% 60% 40% / 40% 40% 60% 60%" 
+                }}
+              >
+                <span className="text-lg">+</span>
+              </motion.div>
+              <span className="text-sm ml-2">Plant New Friend</span>
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation Links */}
+      <nav className="flex-1 p-4 overflow-y-auto">
+        {isOpen && (
+          <h2 className="text-sm font-medium text-farm-brown mb-3 flex items-center">
+            <span className="mr-2">🚜</span>Farm Navigation
+          </h2>
+        )}
+        
+        <ul className="space-y-2">
+          {navLinks.map((link) => {
+            const isActive = location.pathname === link.to;
+            
+            return (
+              <li key={link.to}>
+                <Link
+                  to={link.to}
+                  className={`flex items-center rounded-lg transition-colors relative
+                    ${isOpen ? 'p-2' : 'p-2 justify-center'}
+                    ${isActive 
+                      ? 'bg-farm-green-light/60 text-farm-brown-dark border-l-4 border-farm-green shadow-sm'
+                      : 'hover:bg-farm-blue-light/30 text-farm-brown'
+                    }`}
+                  onClick={(e) => {
+                    // If sidebar is closed and we're on mobile, toggle it open after navigation
+                    if (!isOpen && isMobile) {
+                      e.preventDefault(); // Prevent navigation
+                      toggleSidebar(); // Open sidebar instead
+                    }
+                  }}
+                >
+                  {!isOpen && isActive && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-farm-green rounded-r-full"></div>
+                  )}
+                  <motion.div
+                    className={`w-8 h-8 min-w-[2rem] flex items-center justify-center overflow-hidden ${
+                      isActive 
+                        ? 'bg-farm-green shadow-inner' 
+                        : 'bg-farm-brown-light/30'
+                    }`}
+                    style={{ 
+                      borderRadius: isActive 
+                        ? "50% 50% 50% 50% / 50% 50% 50% 50%" 
+                        : "30% 70% 70% 30% / 30% 30% 70% 70%" 
+                    }}
+                    whileHover={{
+                      scale: 1.1, 
+                      borderRadius: "40% 60% 60% 40% / 40% 40% 60% 60%"
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <span className={`${isActive ? 'text-white' : ''} text-lg`}>{link.icon}</span>
+                  </motion.div>
+                  {isOpen && <span className={`ml-3 ${isActive ? 'font-medium' : ''}`}>{link.label}</span>}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-farm-brown">
+        {isOpen ? (
+          <div className="text-xs text-farm-brown text-center">
+            <p>🌱 Dolphinoko Farm v1.0</p>
+            <p className="mt-1">Grow your AI tools with care</p>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <motion.div
+              className="w-8 h-8 flex items-center justify-center bg-farm-green-light/30"
+              style={{ 
+                borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%" 
+              }}
+              animate={{ 
+                borderRadius: [
+                  "30% 70% 70% 30% / 30% 30% 70% 70%",
+                  "40% 60% 60% 40% / 40% 40% 60% 60%",
+                  "30% 70% 70% 30% / 30% 30% 70% 70%"
+                ]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+            >
+              <span className="text-lg">🌱</span>
+            </motion.div>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 };
 

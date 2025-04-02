@@ -1,0 +1,306 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import better fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  /* Updated color palette - more modern and cohesive */
+  --dolphin-primary: #4F86F7;
+  --dolphin-primary-dark: #3264D0;
+  --dolphin-primary-light: #7CA9FF;
+  
+  --dolphin-secondary: #3BD9AC;
+  --dolphin-secondary-dark: #27B08A;
+  --dolphin-secondary-light: #5EEDC2;
+  
+  --dolphin-accent: #FF6B97;
+  --dolphin-accent-dark: #E84C78;
+  --dolphin-accent-light: #FF9AB9;
+  
+  --dolphin-blue: #4F86F7;
+  --dolphin-blue-dark: #3264D0;
+  --dolphin-green: #3BD9AC;
+  --dolphin-green-dark: #27B08A;
+  --dolphin-purple: #9982DB;
+  --dolphin-purple-dark: #7864B5;
+  --dolphin-orange: #FFB259;
+  --dolphin-orange-dark: #E9953F;
+  --dolphin-pink: #FF6B97;
+  --dolphin-pink-dark: #E84C78;
+  
+  --dolphin-bg-light: #F8FAFC;
+  --dolphin-bg-dark: #111827;
+  
+  /* Text colors */
+  --text-primary-light: #334155;
+  --text-secondary-light: #64748b;
+  --text-primary-dark: #e2e8f0;
+  --text-secondary-dark: #94a3b8;
+  
+  /* Base styles */
+  --primary-color: #ff6b9c;
+  --secondary-color: #9c6bff;
+  --accent-color: #ffd16b;
+  --background-light: #fff5fa;
+  --text-primary: #583a63;
+  --text-secondary: #7a5788;
+  
+  /* Font settings for cute anime style */
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  @apply bg-gradient-to-br from-purple-50 to-pink-50;
+  color: var(--text-primary);
+  overscroll-behavior: none;
+  font-feature-settings: "pnum" on, "lnum" on;
+  font-family: 'Poppins', sans-serif;
+}
+
+.dark body {
+  color: var(--text-primary-dark);
+}
+
+/* Custom Pixel Art Styles */
+.pixel-font {
+  font-family: 'Press Start 2P', cursive;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Modern UI Components */
+.dolphin-panel {
+  @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 border border-gray-100 dark:border-gray-700;
+}
+
+.dolphin-panel-title {
+  @apply text-dolphin-primary dark:text-dolphin-primary-light font-medium text-base border-b border-gray-100 dark:border-gray-700 pb-2 mb-3;
+}
+
+.dolphin-button {
+  @apply px-3 py-2 bg-dolphin-primary/10 hover:bg-dolphin-primary/20 dark:bg-dolphin-primary/20 dark:hover:bg-dolphin-primary/30
+    text-dolphin-primary dark:text-dolphin-primary-light rounded-md transition text-left flex items-center font-medium;
+}
+
+.dolphin-icon {
+  @apply mr-2 inline-block;
+}
+
+.dolphin-card {
+  @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700 
+    hover:shadow-md transition-shadow;
+}
+
+/* Modern dropdown styling */
+.dolphin-dropdown {
+  @apply relative text-left w-full;
+}
+
+.dolphin-dropdown-button {
+  @apply flex items-center justify-between w-full px-3 py-2 bg-white dark:bg-gray-800 text-sm font-medium 
+    text-gray-700 dark:text-gray-200 rounded-md border border-gray-200 dark:border-gray-700
+    hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors;
+}
+
+.dolphin-dropdown-items {
+  @apply absolute right-0 mt-1 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg z-10
+    border border-gray-100 dark:border-gray-700 overflow-hidden;
+}
+
+.dolphin-dropdown-item {
+  @apply flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200
+    hover:bg-dolphin-primary/10 dark:hover:bg-dolphin-primary/20 cursor-pointer;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Animated elements */
+.floating {
+  animation: float 3s ease-in-out infinite;
+}
+
+.bouncing {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.pulsing {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.sparkling {
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+/* Custom scrollbar for cute style */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(233, 213, 255, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #ff9ed2, #b69cff);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #ff7ec1, #9d85ff);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .anime-panel {
+    @apply p-3;
+  }
+  
+  .heading-1 {
+    @apply text-xl;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none;
+  }
+}
+
+/* Cute anime-style components */
+.anime-button {
+  @apply px-4 py-2 rounded-full bg-gradient-to-r from-pink-400 to-purple-400 
+    text-white font-medium shadow-md transition-all duration-300 hover:shadow-lg 
+    hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-300;
+}
+
+.anime-panel {
+  @apply bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-pink-100 p-4;
+}
+
+.anime-input {
+  @apply bg-white/80 backdrop-blur-sm border border-purple-100 rounded-lg px-4 py-2 
+    focus:outline-none focus:ring-2 focus:ring-pink-300 transition-all duration-300;
+}
+
+/* Text styles */
+.heading-1 {
+  @apply text-2xl md:text-3xl font-bold text-purple-800;
+}
+
+.heading-2 {
+  @apply text-xl font-bold text-purple-700;
+}
+
+.subtitle {
+  @apply text-sm text-pink-600;
+}
+
+/* Text classes - helpers for consistent text styling */
+.text-title {
+  @apply text-dolphin-primary dark:text-dolphin-primary-light font-medium;
+}
+
+.text-body {
+  @apply text-gray-700 dark:text-gray-300;
+}
+
+.text-secondary {
+  @apply text-gray-500 dark:text-gray-400 text-sm;
+}
+
+.text-caption {
+  @apply text-gray-500 dark:text-gray-400 text-xs;
+}
+
+/* Character animations */
+@keyframes gentle-hop {
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-2px) scale(1.02); }
+  60% { transform: translateY(-2px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.gentle-hop {
+  animation: gentle-hop 2s ease-in-out infinite;
+}
+
+@keyframes gentle-sway {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(2deg); }
+  75% { transform: rotate(-2deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.gentle-sway {
+  animation: gentle-sway 3s ease-in-out infinite;
+}
+
+/* Tailwind extensions */
+@layer utilities {
+  .text-dolphin-primary {
+    color: var(--dolphin-primary);
+  }
+  .text-dolphin-primary-light {
+    color: var(--dolphin-primary-light);
+  }
+  .text-dolphin-primary-dark {
+    color: var(--dolphin-primary-dark);
+  }
+  .text-dolphin-secondary {
+    color: var(--dolphin-secondary);
+  }
+  .text-dolphin-accent {
+    color: var(--dolphin-accent);
+  }
+  
+  .bg-dolphin-primary {
+    background-color: var(--dolphin-primary);
+  }
+  .bg-dolphin-primary-light {
+    background-color: var(--dolphin-primary-light);
+  }
+  .bg-dolphin-primary-dark {
+    background-color: var(--dolphin-primary-dark);
+  }
+  .bg-dolphin-secondary {
+    background-color: var(--dolphin-secondary);
+  }
+  .bg-dolphin-accent {
+    background-color: var(--dolphin-accent);
+  }
+  
+  .border-dolphin-primary {
+    border-color: var(--dolphin-primary);
+  }
+} 

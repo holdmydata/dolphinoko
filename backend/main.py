@@ -8,11 +8,13 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 from services.storage_service import load_tools as load_tools_json, save_tools as save_tools_json
 from services.sqlite_storage import SQLiteStorage
-
+from routes import chat_routes, conversation_routes
+from utils.tool_sync import sync_tools
 from routes.chat_routes import router as chat_router
 from routes.conversation_routes import router as conversation_router
 from routes.model_routes import router as model_router
 from routes.tool_routes import router as tool_router
+from routes.search_routes import router as search_router
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -41,7 +43,8 @@ else:
     logger.info("Using SQLite for storage (Neo4j disabled)")
     storage_service = SQLiteStorage()
     storage_service.initialize_schema()
-    
+    db_tools = storage_service.get_tools()
+    json_tools = load_tools_json()
 try:
     # Check if we already have tools in the storage
     existing_tools = storage_service.get_tools()
@@ -69,10 +72,11 @@ app.include_router(chat_router)
 app.include_router(conversation_router)
 app.include_router(model_router)
 app.include_router(tool_router)
+app.include_router(search_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://0.0.0.0:7687", "http://localhost:8000"],  # Add your frontend URL
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://0.0.0.0:7687", "http://localhost:8080", "http://localhost:8000"],  # Add your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,6 +109,22 @@ class LLMResponse(BaseModel):
 _tools_data = load_tools_json()
 tools_db: List[ToolConfig] = [ToolConfig(**tool) for tool in _tools_data]
 logger.info(f"Loaded {len(tools_db)} tools from storage")
+
+def reload_tools_from_storage():
+    """Reload tools from storage into in-memory DB"""
+    global tools_db
+    try:
+        # Get tools from storage
+        stored_tools = storage_service.get_tools()
+        
+        # Update in-memory cache
+        tools_db = [ToolConfig(**tool) for tool in stored_tools]
+        
+        logger.info(f"Reloaded {len(tools_db)} tools from storage")
+        return tools_db
+    except Exception as e:
+        logger.error(f"Failed to reload tools from storage: {str(e)}")
+        return tools_db
 
 # Endpoint to get storage configuration
 @app.get("/api/system/config")
@@ -146,15 +166,12 @@ async def create_tool(tool: ToolConfig):
         updated_at=timestamp
     )
     
-    # Add to database
-    tools_db.append(new_tool)
-    
-    # Save to JSON file
-    save_tools_json([t.dict() for t in tools_db])
-    
-    # Also save to persistent storage
+    # Save to storage service only
     tool_dict = new_tool.dict()
     storage_service.save_tool(tool_dict)
+    
+    # Update in-memory cache from storage
+    reload_tools_from_storage()
     
     logger.info(f"Created tool with ID: {new_tool.id}")
     logger.info(f"Tools in DB now: {len(tools_db)}")
@@ -170,30 +187,33 @@ async def get_tool(tool_id: str):
 
 @app.put("/api/tools/{tool_id}")
 async def update_tool(tool_id: str, updated_tool: ToolConfig):
-    # Find the tool
-    tool_index = next((i for i, t in enumerate(tools_db) if t.id == tool_id), None)
-    if tool_index is None:
+    global tools_db
+    
+    # Find the tool to get its created_at
+    tool = next((t for t in tools_db if t.id == tool_id), None)
+    if tool is None:
         raise HTTPException(status_code=404, detail="Tool not found")
     
     # Update timestamps
     timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     
-    # Create updated tool with original ID and creation date
-    tool_dict = updated_tool.dict()
+    # Create updated tool dict
+    tool_dict = updated_tool.dict(exclude_unset=True)
     tool_dict["id"] = tool_id
-    tool_dict["created_at"] = tools_db[tool_index].created_at
+    tool_dict["created_at"] = tool.created_at
     tool_dict["updated_at"] = timestamp
     
-    updated = ToolConfig(**tool_dict)
+    # Save to storage
+    result = storage_service.save_tool(tool_dict)
     
-    # Update in database
-    tools_db[tool_index] = updated
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to update tool")
     
-    # Save to JSON file
-    save_tools_json([t.dict() for t in tools_db])
+    # Sync from storage - single source of truth approach
+    tools_db = sync_tools(tools_db, ToolConfig, storage_service, save_tools_json)
     
-    # Also update in persistent storage
-    storage_service.save_tool(tool_dict)
+    # Get the updated tool from the synced data
+    updated = next((t for t in tools_db if t.id == tool_id), None)
     
     logger.info(f"Updated tool with ID: {tool_id}")
     
@@ -334,8 +354,8 @@ async def reload_tools():
     except Exception as e:
         logger.error(f"Failed to reload tools: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to reload tools: {str(e)}") 
-
+    
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)

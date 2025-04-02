@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { api } from "../utils/api";
+import { useNotification } from "./NotificationContext";
 
 // Define types
 export interface Tool {
@@ -43,6 +44,9 @@ export interface LLMResponse {
     provider: string;
     model: string;
     processing_time: number;
+    model_fallback?: boolean;
+    original_model?: string;
+    error?: boolean;
     [key: string]: any;
   };
 }
@@ -68,6 +72,7 @@ export const ToolProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
+  const { showModelFallback, showError } = useNotification();
 
   useEffect(() => {
     fetchTools();
@@ -137,10 +142,28 @@ export const ToolProvider: React.FC<{ children: React.ReactNode }> = ({
   const runTool = async (request: LLMRequest): Promise<LLMResponse> => {
     try {
       // Add the type parameter to api.post
-      const response = await api.post<LLMResponse>("/api/llm/generate", request);
+      const response = await api.post<LLMResponse>("/api/tools/execute", request);
+      
+      // Check for model fallback and show notification
+      if (response.metadata?.model_fallback) {
+        showModelFallback(
+          response.metadata.original_model || "Unknown", 
+          response.metadata.model || "Unknown"
+        );
+      }
+      
+      // Check for errors
+      if (response.metadata?.error) {
+        showError(
+          "Tool Execution Error", 
+          response.output || "An error occurred while executing the tool"
+        );
+      }
+      
       return response;
     } catch (err) {
       console.error("Failed to run tool:", err);
+      showError("Tool Execution Failed", "Could not execute the tool. Please try again.");
       throw err;
     }
   };

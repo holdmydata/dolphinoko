@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
-import { Button, Card, Textarea, Badge } from "../common";
+import { Button, Card, TextArea, Badge } from "../common";
 import { api } from "../../utils/api";
 import {
   ToolContext,
@@ -11,6 +11,9 @@ import { ensureChatTool } from "../../utils/ensureTools";
 import { v4 as uuidv4, v4 } from "uuid";
 import { useConversation } from "../../context/ConversationContext";
 import { Message as ApiMessage } from "../../utils/api";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 // Add these type definitions
 interface ProcessedMessage {
   type: "chat" | "tool" | "parameter_request";
@@ -69,6 +72,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [input, setInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [streamingMessage, setStreamingMessage] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [showMetrics, setShowMetrics] = useState<{ [key: string]: boolean }>(
     {}
   );
@@ -80,7 +85,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Two options for scrolling - choose the one that works best for your layout
+  
+    // Option 1: Scroll the message container to the bottom
+    if (messagesEndRef.current) {
+      // Get the parent scroll container
+      const scrollContainer = messagesEndRef.current.closest('.overflow-y-auto');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  
+    // Option 2: If option 1 doesn't work well, use this alternative approach
+    // that scrolls the message container into view but doesn't force the window scroll
+    /*
+    messagesEndRef.current?.scrollIntoView({ 
+      behavior: "smooth", 
+      block: "end",    // Try "end" instead of the default 
+      inline: "nearest" 
+    });
+    */
   }, [messages]);
 
   // Add a new useEffect to ensure a chat tool exists when provider/model changes
@@ -161,31 +185,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setError(null);
     setIsLoading(true);
 
-    // Store user message in Neo4j
+    // Store user message if conversation exists
     if (conversationId) {
       try {
-        // Create a simplified message object with only the fields the server expects
         const messageData = {
           content: userMessage.content,
           role: userMessage.role,
-          // Don't include other fields like timestamp that might cause issues
         };
-
         console.log("Sending message to server:", messageData);
-
         await api.post(
           `/api/conversations/${conversationId}/messages`,
           messageData
         );
       } catch (persistError) {
-        console.error(
-          "Failed to store user message in conversation:",
-          persistError
-        );
-        if (persistError.response) {
-          console.error("Server response:", persistError.response.data);
-        }
-        // We continue with the flow despite persistence errors
+        console.error("Failed to store user message:", persistError);
       }
     }
 
@@ -193,15 +206,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (messageProcessor) {
       try {
         const processed = await messageProcessor(userMessage.content);
-
         if (processed.type === "tool" && processed.toolId) {
           await handleToolProcessing(processed);
           setIsLoading(false);
           return;
         }
-
         if (processed.type === "parameter_request") {
-          // Handle parameter collection UI
           setCollectingParameters({
             toolId: processed.toolId || "",
             currentParams: processed.currentParameters || {},
@@ -212,11 +222,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       } catch (err) {
         console.error("Error processing message:", err);
-        // Fall through to normal chat processing
       }
     }
 
-    // If no tool was triggered or no processor is available, proceed with normal chat
+    // If no tool triggered or processor available, proceed with normal chat
     if (!modelName) {
       const errorMessage: UIMessage = {
         id: generateId(),
@@ -230,10 +239,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
 
     const startTime = new Date();
+    const responseId = generateId();
 
     try {
-      let response;
-      let toolExecution: ToolExecutionEvent | undefined;
+      // Create a placeholder for streaming response
+      setIsStreaming(true);
+      setStreamingMessage("");
+
+      // Add placeholder message
+      const placeholderMessage: UIMessage = {
+        id: responseId,
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, placeholderMessage]);
+
       let chatTool = toolContext?.tools.find(
         (t) => t.name.toLowerCase().includes("chat") && t.provider === provider
       );
@@ -241,7 +263,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       // If no chat tool exists yet, try to create one
       if (!chatTool && toolContext && !toolContext.loading) {
         try {
-          // Try to create the tool
           chatTool = await ensureChatTool(toolContext, provider, modelName);
         } catch (err) {
           console.warn(
@@ -251,21 +272,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }
 
-      if (chatTool && toolContext?.runTool) {
-        // If we have a chat tool, use the tool execution framework
-        const request: LLMRequest = {
-          tool_id: chatTool.id!,
-          input: userMessage.content,
-          parameters: {
-            model: modelName,
-            temperature: 0.7,
-            max_tokens: 1000,
-          },
-          // Add conversation_id for memory
-          conversation_id: conversationId || v4(),
-        };
+      let toolExecution: ToolExecutionEvent | undefined;
+      let response: any = {};
 
-        // Create and track the tool execution event
+      if (chatTool && toolContext?.runTool) {
+        // Setup for streaming
+        const controller = new AbortController();
+        const signal = controller.signal;
+
+        // Create tool execution event
         toolExecution = {
           id: generateId(),
           toolId: chatTool.id!,
@@ -277,7 +292,164 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           metrics: {},
         };
 
-        // Report the pending execution
+        // Report pending execution
+        onToolExecution && onToolExecution(toolExecution);
+
+        // Run tool with streaming
+        try {
+          // Make streaming request
+          const streamResponse = await fetch(`/api/chat/stream`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              tool_id: chatTool.id!,
+              input: userMessage.content,
+              parameters: {
+                model: modelName,
+                temperature: 0.7,
+                stream: true,
+              },
+              conversation_id: conversationId || v4(),
+            }),
+            signal,
+          });
+        
+          if (!streamResponse.ok) {
+            throw new Error(`HTTP error! status: ${streamResponse.status}`);
+          }
+        
+          const reader = streamResponse.body?.getReader();
+          if (!reader) throw new Error("Response body is null");
+        
+          // Start streaming
+          let fullText = "";
+          let noContentReceived = true;
+        
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            // Decode chunk
+            const chunk = new TextDecoder().decode(value);
+            console.log("Chunk received:", chunk);
+            
+            try {
+              const lines = chunk.split('\n').filter(line => line.trim() !== '');
+              
+              for (const line of lines) {
+                console.log("Processing line:", line);
+                
+                if (line.startsWith('data: ')) {
+                  const jsonStr = line.slice(6);
+                  console.log("JSON string:", jsonStr);
+                  
+                  if (jsonStr === '[DONE]') {
+                    console.log("Done marker received");
+                    continue;
+                  }
+                  
+                  try {
+                    const data = JSON.parse(jsonStr);
+                    console.log("Parsed data:", data);
+                    
+                    if (data.content) {
+                      noContentReceived = false;
+                      fullText += data.content;
+                      setStreamingMessage(fullText);
+                      
+                      // Update the message in the UI
+                      setMessages(prev =>
+                        prev.map(msg =>
+                          msg.id === responseId
+                            ? { ...msg, content: fullText }
+                            : msg
+                        )
+                      );
+                    } else if (data.error) {
+                      console.error("Received error from streaming:", data.error);
+                      throw new Error(data.error);
+                    }
+                  } catch (e) {
+                    console.error("Error parsing JSON:", e, jsonStr);
+                  }
+                }
+              }
+            } catch (e) {
+              console.error("Error processing chunk:", e);
+            }
+          }
+          
+          // If we got to the end but received no content
+          if (noContentReceived) {
+            console.warn("No content received in streaming response");
+            fullText = "No response received from the model. Please try again.";
+            
+            // Update the placeholder message
+            setMessages(prev =>
+              prev.map(msg =>
+                msg.id === responseId
+                  ? { ...msg, content: fullText }
+                  : msg
+              )
+            );
+          }
+        
+          // Streaming complete
+          toolExecution = {
+            ...toolExecution,
+            output: fullText,
+            endTime: new Date(),
+            status: "success",
+            metrics: {
+              processingTime: new Date().getTime() - startTime.getTime(),
+            },
+          };
+          
+          // Report final execution
+          onToolExecution && onToolExecution(toolExecution);
+          
+          // Set response for consistent handling below
+          response = {
+            text: fullText,
+            model: modelName,
+            metadata: {
+              processingTime: new Date().getTime() - startTime.getTime(),
+            },
+          };
+          
+        } catch (err) {
+          console.error("Streaming error:", err);
+          controller.abort();
+          throw err;
+        }
+      } else if (chatTool && toolContext?.runTool) {
+        // Create request object for non-streaming flow
+        const request: LLMRequest = {
+          tool_id: chatTool.id!,
+          input: userMessage.content,
+          parameters: {
+            model: modelName,
+            temperature: 0.7,
+            max_tokens: 1000,
+          },
+          conversation_id: conversationId || v4(),
+        };
+
+        // Create tool execution event
+        toolExecution = {
+          id: generateId(),
+          toolId: chatTool.id!,
+          toolName: chatTool.name,
+          input: userMessage.content,
+          output: "",
+          startTime,
+          status: "pending",
+          metrics: {},
+        };
+
+        // Report pending execution
         onToolExecution && onToolExecution(toolExecution);
 
         // Run the tool
@@ -356,25 +528,34 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         onToolExecution && onToolExecution(toolExecution);
       }
 
-      // Add assistant response to chat
-      const assistantMessage: UIMessage = {
-        id: generateId(),
-        role: "assistant",
-        content: response.text || response.output || "No response received",
-        timestamp: new Date(),
-        toolExecution,
-      };
+      // For streaming, we've already updated the message in place
+      if (!isStreaming) {
+        // Add assistant response to chat (for non-streaming responses)
+        const assistantMessage: UIMessage = {
+          id: responseId, // Use the same ID as the placeholder for update
+          role: "assistant",
+          content: response.text || response.output || "No response received",
+          timestamp: new Date(),
+          toolExecution,
+        };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+        setMessages((prev) =>
+          prev.map((msg) => (msg.id === responseId ? assistantMessage : msg))
+        );
 
-      // Auto-show metrics for this message
-      setShowMetrics((prev) => ({
-        ...prev,
-        [assistantMessage.id]: true,
-      }));
+        // Auto-show metrics for this message
+        setShowMetrics((prev) => ({
+          ...prev,
+          [responseId]: true,
+        }));
+      }
+
+      // Set streaming state to false
+      setIsStreaming(false);
     } catch (err: any) {
       console.error("Error sending message:", err);
       setError("Failed to get a response. Please try again.");
+      setIsStreaming(false);
 
       // Create an error tool execution
       const errorExecution: ToolExecutionEvent = {
@@ -393,6 +574,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       // Report the error execution
       onToolExecution && onToolExecution(errorExecution);
+
+      // Update the placeholder message with the error
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === responseId
+            ? {
+                ...msg,
+                content: `Error: ${err.message || "An error occurred"}`,
+                toolExecution: errorExecution,
+              }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -577,6 +771,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // Process with the tool
     if (toolContext) {
       setIsLoading(true);
+      const startTime = new Date(); // Add this
+      const responseId = generateId(); // Add this
 
       try {
         const response = await toolContext.runTool({
@@ -593,7 +789,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               ?.name || "Unknown Tool",
           input: combinedParams,
           output: response.output,
-          startTime: new Date(),
+          startTime: startTime,
           endTime: new Date(),
           status: "success",
           metrics: response.metadata,
@@ -604,7 +800,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         // Add assistant message
         const assistantMessage: UIMessage = {
-          id: generateId(),
+          id: responseId,
           role: "assistant",
           content: response.output,
           timestamp: new Date(),
@@ -612,15 +808,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         };
 
         setMessages((prev) => [...prev, assistantMessage]);
-      } catch (error: any) {
-        console.error("Parameter submission failed:", error);
+
+        // Auto-show metrics for this message
+        setShowMetrics((prev) => ({
+          ...prev,
+          [responseId]: true,
+        }));
+      } catch (err: any) {
+        console.error("Parameter submission failed:", err);
+
+        // Create an error execution
+        const errorExecution: ToolExecutionEvent = {
+          id: generateId(),
+          toolId: collectingParameters.toolId,
+          toolName:
+            toolContext.tools.find((t) => t.id === collectingParameters.toolId)
+              ?.name || "Unknown Tool",
+          input: combinedParams,
+          output: err.message || "An error occurred",
+          startTime: startTime,
+          endTime: new Date(),
+          status: "error",
+          metrics: {
+            error: err.message,
+          },
+        };
+
+        // Report the error
+        onToolExecution && onToolExecution(errorExecution);
 
         // Add error message
         const errorMessage: UIMessage = {
-          id: generateId(),
+          id: responseId,
           role: "assistant",
-          content: `Error: ${error.message || "Unknown error"}`,
+          content: `Error: ${err.message || "Unknown error"}`,
           timestamp: new Date(),
+          toolExecution: errorExecution,
         };
 
         setMessages((prev) => [...prev, errorMessage]);
@@ -733,7 +956,43 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     : "bg-gray-100 text-gray-900"
                 }`}
               >
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                <div className="markdown-content">
+                  <ReactMarkdown
+                    components={{
+                      code: ({
+                        node,
+                        inline,
+                        className,
+                        children,
+                        ...props
+                      }: {
+                        node?: any;
+                        inline?: boolean;
+                        className?: string;
+                        children: React.ReactNode;
+                        [key: string]: any;
+                      }) => {
+                        const match = /language-(\w+)/.exec(className || "");
+                        return !inline && match ? (
+                          <SyntaxHighlighter
+                            style={atomDark}
+                            language={match[1]}
+                            PreTag="div"
+                            {...props}
+                          >
+                            {String(children).replace(/\n$/, "")}
+                          </SyntaxHighlighter>
+                        ) : (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        );
+                      },
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
 
                 {/* Timestamp and metrics toggle */}
                 <div
@@ -1010,7 +1269,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           }}
           className="flex items-end"
         >
-          <Textarea
+          <TextArea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

@@ -1,0 +1,282 @@
+/* Pixel Character Sprite Sheet CSS */
+
+/* Base character sprite styles */
+.pixel-character {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: block;
+  transform: scale(2);
+  transform-origin: center;
+  filter: contrast(1.1) brightness(1.1);
+}
+
+/* Make sprites more pixelated */
+.pixelated-sprite {
+  image-rendering: pixelated !important;
+  transform: scale(3) !important;
+  image-rendering: -moz-crisp-edges !important;
+  image-rendering: crisp-edges !important;
+}
+
+/* Dolphin sprite styles - these will use pixelated dolphin images */
+.dolphin-base {
+  background-color: #77BBFF;
+  border: 2px solid #4499DD;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.dolphin-green {
+  background-color: #77DD99;
+  border: 2px solid #44AA66;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.dolphin-purple {
+  background-color: #AA77DD;
+  border: 2px solid #8855AA;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.dolphin-orange {
+  background-color: #FFAA66;
+  border: 2px solid #DD8844;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.dolphin-pink {
+  background-color: #FF99CC;
+  border: 2px solid #DD6699;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+/* Original sprite sheet styles (kept for reference) */
+.farmer-sprite {
+  background-color: #FF7777;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.shopkeeper-sprite {
+  background-color: #77AAFF;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.gardener-sprite {
+  background-color: #FFAA77;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.fisherman-sprite {
+  background-color: #BB77FF;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.rancher-sprite {
+  background-color: #FF9944;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.miner-sprite {
+  background-color: #AA8866;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.cook-sprite {
+  background-color: #EEEEEE;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.carpenter-sprite {
+  background-color: #AABBCC;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+/* Animation Keyframes */
+@keyframes walk-down {
+  0% { background-position: 0px 0px; }
+  25% { background-position: -32px 0px; }
+  50% { background-position: -64px 0px; }
+  75% { background-position: -96px 0px; }
+  100% { background-position: 0px 0px; }
+}
+
+@keyframes walk-left {
+  0% { background-position: 0px -32px; }
+  25% { background-position: -32px -32px; }
+  50% { background-position: -64px -32px; }
+  75% { background-position: -96px -32px; }
+  100% { background-position: 0px -32px; }
+}
+
+@keyframes walk-right {
+  0% { background-position: 0px -64px; }
+  25% { background-position: -32px -64px; }
+  50% { background-position: -64px -64px; }
+  75% { background-position: -96px -64px; }
+  100% { background-position: 0px -64px; }
+}
+
+@keyframes walk-up {
+  0% { background-position: 0px -96px; }
+  25% { background-position: -32px -96px; }
+  50% { background-position: -64px -96px; }
+  75% { background-position: -96px -96px; }
+  100% { background-position: 0px -96px; }
+}
+
+/* Dolphin animation */
+@keyframes dolphin-swim {
+  0% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-2px) rotate(5deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(2px) rotate(-5deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+.dolphin-swim {
+  animation: dolphin-swim 1.2s infinite;
+}
+
+/* Idle Animations */
+@keyframes idle {
+  0% { transform: scale(2); }
+  50% { transform: scale(2.05); }
+  100% { transform: scale(2); }
+}
+
+/* Character Container Animations */
+.bounce-animation {
+  animation: bounce 0.6s infinite alternate;
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+/* Hover and active states */
+.character-hover {
+  filter: brightness(1.2);
+  transform: scale(2.2) !important;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.character-active {
+  filter: brightness(1.3);
+  transform: scale(2.2) !important;
+  z-index: 100;
+}
+
+/* Japanese ad style */
+.japan-ad-style {
+  filter: saturate(1.2) contrast(1.05);
+  position: relative;
+}
+
+.japan-ad-style::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, transparent 80%, rgba(255,255,255,0.2) 100%);
+  pointer-events: none;
+}
+
+/* Speech bubble */
+.speech-bubble {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 2px solid black;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 10px;
+  white-space: nowrap;
+  z-index: 110;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.speech-bubble:after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid black;
+}
+
+/* Simple dolphin pixel art placeholder */
+.dolphin-pixel {
+  width: 24px;
+  height: 24px;
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH5goFCgMNQhpTkwAAAcRJREFUWMPtlj9IAmEYxn/nd56aRENDELQ0NDRFDdEQNEQ4NDREUzgUNIXQ0G4Q1Og/aG6JxiBoaggaXIKGoKkhqCEoiCD9X33fHXd66qk5OPRA5/c97/O+d+/3vbw2i2GxWCwWyzKQYlrDO39tUZFaVQMBuBF9OtXHb4l+hm0qcqyy+vKsngQ4gVdxLupNu85yPbR1/4P+LqpfiFKOdaU3URHFP6P9b2oAuBfRx4aBvbeMlXJtGg7tGAhvXQEaJupJ4eVnAJ30IjcvN+wX3pYkw8eeyPVRvxmq0+Uh4k6izGON40p7c8YdPnQ6TITx6fRQ2vSvxfLmG1mY9SjMWKezuZW6xF6JGfgBtUmAUr2wVuEhfcXBwx7XqTSBUC/B7RCnT0koW0e3DYFQX5Ee1+lL5CzJTGqTULaQruIqes5F7JTNWBIgb1mA/L8L0IoNVLa0PwGh9ynL9YEQVAOQpPvhcbQXwZ1lNd5tDlCydzbgxvvL6/Hsi1xpxakHgG8/xGFAZEj2TXM1YBXwFa/OPCIDvxf4LcDIUZrSk2GnOpE3bSoDJNV22V0P37cKWCwWi8XyA2mQmgwlP38mAAAAAElFTkSuQmCC');
+  background-repeat: no-repeat;
+  background-size: contain;
+  display: inline-block;
+}
+
+/* Container for character selection */
+.character-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.character-category {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.character-category:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.character-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 6px;
+  margin-top: 4px;
+}
+
+.character-option {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.character-option:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.character-name {
+  font-size: 10px;
+  margin-top: 4px;
+  text-align: center;
+} 

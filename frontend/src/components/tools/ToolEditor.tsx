@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Tool } from "../../context/ToolContext";
+import { motion } from "framer-motion";
 
 interface ToolEditorProps {
   tool: Tool;
@@ -95,11 +96,33 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
     onSave(editedTool);
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+    <motion.form 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      onSubmit={handleSubmit} 
+      className="space-y-6 bg-white p-6 rounded-lg border-2 border-farm-brown-light shadow-md"
+    >
+      <motion.div variants={containerVariants} className="space-y-4">
+        <motion.div variants={itemVariants}>
+          <label className="block text-sm font-medium text-farm-brown-dark mb-1">
             Name
           </label>
           <input
@@ -108,28 +131,30 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
             value={editedTool.name}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+            className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                       focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
             placeholder="Tool name"
           />
-        </div>
+        </motion.div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <motion.div variants={itemVariants}>
+          <label className="block text-sm font-medium text-farm-brown-dark mb-1">
             Description
           </label>
           <textarea
             name="description"
             value={editedTool.description}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+            className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                       focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
             rows={2}
             placeholder="Short description of what this tool does"
           />
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <motion.div variants={containerVariants} className="grid grid-cols-2 gap-4">
+          <motion.div variants={itemVariants}>
+            <label className="block text-sm font-medium text-farm-brown-dark mb-1">
               Category
             </label>
             <div className="flex items-center space-x-2">
@@ -138,7 +163,8 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   name="category"
                   value={editedTool.category}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                             focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
                 >
                   <option value="">Select a category</option>
                   {categories.map((cat) => (
@@ -153,11 +179,14 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   name="category"
                   value={editedTool.category}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                             focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
                   placeholder="Custom category"
                 />
               )}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => {
                   setCustomCategory(!customCategory);
@@ -165,15 +194,16 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                     setEditedTool((prev) => ({ ...prev, category: "" }));
                   }
                 }}
-                className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md"
+                className="px-3 py-2 text-sm bg-farm-brown-light hover:bg-farm-brown 
+                           text-farm-brown-dark rounded-md border border-farm-brown transition-colors"
               >
                 {customCategory ? "Select" : "Custom"}
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <motion.div variants={itemVariants}>
+            <label className="block text-sm font-medium text-farm-brown-dark mb-1">
               Subcategory
             </label>
             <div className="flex items-center space-x-2">
@@ -182,7 +212,9 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   name="subcategory"
                   value={editedTool.subcategory}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                             focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark
+                             disabled:bg-farm-brown-light/10 disabled:text-farm-brown/50 disabled:cursor-not-allowed"
                   disabled={
                     !editedTool.category || availableSubcategories.length === 0
                   }
@@ -200,12 +232,16 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                   name="subcategory"
                   value={editedTool.subcategory}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                             focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark
+                             disabled:bg-farm-brown-light/10 disabled:text-farm-brown/50 disabled:cursor-not-allowed"
                   placeholder="Custom subcategory"
                   disabled={!editedTool.category}
                 />
               )}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => {
                   setCustomSubcategory(!customSubcategory);
@@ -213,34 +249,37 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
                     setEditedTool((prev) => ({ ...prev, subcategory: "" }));
                   }
                 }}
-                className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md"
+                className="px-3 py-2 text-sm bg-farm-brown-light hover:bg-farm-brown 
+                           text-farm-brown-dark rounded-md border border-farm-brown transition-colors
+                           disabled:bg-farm-brown-light/30 disabled:text-farm-brown/50 disabled:cursor-not-allowed"
                 disabled={!editedTool.category}
               >
                 {customSubcategory ? "Select" : "Custom"}
-              </button>
+              </motion.button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <motion.div variants={containerVariants} className="grid grid-cols-2 gap-4">
+          <motion.div variants={itemVariants}>
+            <label className="block text-sm font-medium text-farm-brown-dark mb-1">
               Provider
             </label>
             <select
               name="provider"
               value={editedTool.provider}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                         focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
             >
               <option value="ollama">Ollama</option>
               <option value="openai">OpenAI</option>
               <option value="anthropic">Anthropic</option>
             </select>
-          </div>
+          </motion.div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <motion.div variants={itemVariants}>
+            <label className="block text-sm font-medium text-farm-brown-dark mb-1">
               Model
             </label>
             <input
@@ -248,15 +287,16 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               name="model"
               value={editedTool.model}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                         focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
               placeholder="e.g., llama3:latest"
               required
             />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <motion.div variants={itemVariants}>
+          <label className="block text-sm font-medium text-farm-brown-dark mb-1">
             Prompt Template
           </label>
           <div className="relative">
@@ -264,25 +304,26 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               name="prompt_template"
               value={editedTool.prompt_template}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 font-mono"
+              className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                         focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark font-mono"
               rows={8}
               placeholder="Template with {input} placeholders"
               required
             />
             <div className="absolute bottom-2 right-2">
-              <div className="bg-gray-100 text-xs text-gray-600 px-2 py-1 rounded">
+              <div className="bg-farm-brown-light/10 text-xs text-farm-brown px-2 py-1 rounded border border-farm-brown-light">
                 Use {"{input}"} for single value or {"{input.field}"} for
                 structured input
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <motion.div variants={containerVariants} className="grid grid-cols-2 gap-4">
+          <motion.div variants={itemVariants}>
+            <label className="block text-sm font-medium text-farm-brown-dark mb-1">
               Temperature
-              <span className="ml-1 text-gray-400">(0-1)</span>
+              <span className="ml-1 text-farm-brown">(0-1)</span>
             </label>
             <input
               type="number"
@@ -292,12 +333,13 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               min="0"
               max="1"
               step="0.1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                         focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
             />
-          </div>
+          </motion.div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <motion.div variants={itemVariants}>
+            <label className="block text-sm font-medium text-farm-brown-dark mb-1">
               Max Tokens
             </label>
             <input
@@ -308,28 +350,41 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
               min="1"
               max="4000"
               step="1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                         focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
             />
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
-      <div className="pt-4 border-t border-gray-200 flex justify-end space-x-3">
-        <button
+      <motion.div 
+        variants={itemVariants}
+        className="pt-4 border-t border-farm-brown-light flex justify-end space-x-3"
+      >
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          className="px-4 py-2 text-sm font-medium text-farm-brown-dark bg-farm-brown-light 
+                     border border-farm-brown rounded-md hover:bg-farm-brown transition-colors"
         >
           Cancel
-        </button>
-        <button
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-gray-500 border border-transparent rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          className="px-4 py-2 text-sm font-medium text-white bg-farm-green 
+                     border border-farm-green-dark rounded-md hover:bg-farm-green-dark transition-colors"
         >
-          Save Tool
-        </button>
-      </div>
-    </form>
+          <span className="flex items-center">
+            <span className="mr-2">{tool.id ? "🔧" : "🌱"}</span>
+            {tool.id ? "Update Tool" : "Plant Tool"}
+          </span>
+        </motion.button>
+      </motion.div>
+    </motion.form>
   );
 };
 

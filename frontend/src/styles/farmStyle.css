@@ -1,0 +1,207 @@
+/* Harvest Moon GBA inspired styles */
+
+:root {
+  /* Core farm colors */
+  --farm-green-light: #a5d6a7;
+  --farm-green: #81c784;
+  --farm-green-dark: #66bb6a;
+  
+  --farm-blue-light: #b3e5fc;
+  --farm-blue: #81d4fa;
+  --farm-blue-dark: #4fc3f7;
+  
+  --farm-brown-light: #d7ccc8;
+  --farm-brown: #bcaaa4;
+  --farm-brown-dark: #a1887f;
+  
+  --farm-earth: #8d6e63;
+  --farm-earth-light: #f5f2ed;
+  --farm-earth-dark: #5d4037;
+  
+  --farm-wood: #a1887f;
+  --farm-wood-light: #d7ccc8;
+  --farm-wood-dark: #795548;
+}
+
+/* Utility classes for background colors */
+.bg-farm-green-light { background-color: var(--farm-green-light); }
+.bg-farm-green { background-color: var(--farm-green); }
+.bg-farm-green-dark { background-color: var(--farm-green-dark); }
+
+.bg-farm-blue-light { background-color: var(--farm-blue-light); }
+.bg-farm-blue { background-color: var(--farm-blue); }
+.bg-farm-blue-dark { background-color: var(--farm-blue-dark); }
+
+.bg-farm-brown-light { background-color: var(--farm-brown-light); }
+.bg-farm-brown { background-color: var(--farm-brown); }
+.bg-farm-brown-dark { background-color: var(--farm-brown-dark); }
+
+.bg-farm-earth { background-color: var(--farm-earth); }
+.bg-farm-earth-light { background-color: var(--farm-earth-light); }
+.bg-farm-earth-dark { background-color: var(--farm-earth-dark); }
+
+.bg-farm-wood { background-color: var(--farm-wood); }
+.bg-farm-wood-light { background-color: var(--farm-wood-light); }
+.bg-farm-wood-dark { background-color: var(--farm-wood-dark); }
+
+/* Text colors */
+.text-farm-green { color: var(--farm-green); }
+.text-farm-green-dark { color: var(--farm-green-dark); }
+.text-farm-blue { color: var(--farm-blue); }
+.text-farm-blue-dark { color: var(--farm-blue-dark); }
+.text-farm-brown { color: var(--farm-brown-dark); }
+.text-farm-earth { color: var(--farm-earth); }
+.text-farm-wood { color: var(--farm-wood); }
+
+/* Border colors */
+.border-farm-green { border-color: var(--farm-green-dark); }
+.border-farm-blue { border-color: var(--farm-blue-dark); }
+.border-farm-brown { border-color: var(--farm-brown-dark); }
+.border-farm-earth { border-color: var(--farm-earth); }
+.border-farm-wood { border-color: var(--farm-wood-dark); }
+
+/* Chalky texture overlay */
+.chalky-texture {
+  position: relative;
+}
+
+.chalky-texture::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeBlend mode='normal' in='SourceGraphic'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.2'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* Soft buttons with chalky texture */
+.farm-button {
+  background-color: var(--farm-brown-light);
+  border: 2px solid var(--farm-brown-dark);
+  border-radius: 8px;
+  color: var(--farm-earth-dark);
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 2px 0 var(--farm-brown-dark);
+  position: relative;
+}
+
+.farm-button:hover {
+  background-color: var(--farm-brown);
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 var(--farm-brown-dark);
+}
+
+.farm-button:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.farm-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeBlend mode='normal' in='SourceGraphic'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.2'/%3E%3C/svg%3E");
+  opacity: 0.2;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* Farm panels - updated with cleaner style */
+.farm-panel {
+  background-color: #ffffff;
+  border: 2px solid var(--farm-brown);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.farm-panel-title {
+  background-color: var(--farm-brown);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  border-bottom: 2px solid var(--farm-brown-dark);
+  position: relative;
+}
+
+.farm-panel-content {
+  padding: 1rem;
+  position: relative;
+}
+
+/* Earth/dirt pattern */
+.earth-pattern {
+  background-color: var(--farm-earth);
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%235d4037' fill-opacity='0.2' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='13' cy='13' r='1'/%3E%3Ccircle cx='8' cy='17' r='1'/%3E%3Ccircle cx='17' cy='8' r='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Grass pattern */
+.grass-pattern {
+  background-color: var(--farm-green);
+  background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2366bb6a' fill-opacity='0.2'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Fading effect for edges */
+.faded-edges {
+  position: relative;
+}
+
+.faded-edges::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-shadow: inset 0 0 10px 2px rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Dark mode adjustments */
+.dark .farm-panel {
+  background-color: rgba(50, 50, 65, 0.9);
+  border-color: var(--farm-earth-dark);
+}
+
+.dark .farm-button {
+  background-color: var(--farm-earth-dark);
+  border-color: var(--farm-earth-dark);
+  color: #f5f5f5;
+}
+
+.dark .farm-button:hover {
+  background-color: var(--farm-earth);
+}
+
+/* Text color class specifically for Harvest Moon style brown text */
+.text-brown-800 {
+  color: var(--farm-earth-dark);
+}
+
+.text-brown-600 {
+  color: var(--farm-earth);
+}
+
+/* Animation for growing crops */
+@keyframes crop-grow {
+  0% { transform: scale(0.85); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.crop-grow {
+  animation: crop-grow 0.6s ease-out;
+} 

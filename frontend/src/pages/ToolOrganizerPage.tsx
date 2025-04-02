@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTools } from '../hooks/useTools';
 import { Tool } from '../context/ToolContext';
 import { CATEGORIES } from '../types/categories'; // Import your categories
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ToolOrganizerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,6 +37,12 @@ const ToolOrganizerPage: React.FC = () => {
     );
   };
 
+  // Get subcategories for a specific category
+  const getSubcategoriesForCategory = (categoryName: string) => {
+    const category = CATEGORIES.find(c => c.name === categoryName);
+    return category?.subcategories || [];
+  };
+
   // Save all changes
   const handleSaveChanges = async () => {
     try {
@@ -59,143 +66,206 @@ const ToolOrganizerPage: React.FC = () => {
     }
   };
 
-  // Get available subcategories for a category
-  const getSubcategoriesForCategory = (category: string) => {
-    return CATEGORIES.find(c => c.name === category)?.subcategories || [];
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1, 
+      transition: { 
+        staggerChildren: 0.05,
+        when: "beforeChildren" 
+      } 
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 24 }
+    },
+    hover: { 
+      scale: 1.02, 
+      boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+      transition: { duration: 0.2 }
+    },
+    tap: { scale: 0.98 }
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Tool Organizer</h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Organize your tools into categories
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          <button
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="container mx-auto px-4 py-6"
+    >
+      {/* Header */}
+      <motion.div variants={itemVariants} className="mb-8">
+        <motion.h1 
+          className="text-3xl font-bold text-farm-brown-dark retro-text mb-2 text-center"
+          animate={{ scale: [1, 1.02, 1] }}
+          transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+        >
+          <span className="text-2xl mr-2">🌾</span>
+          Organize Tool Shed
+          <span className="text-2xl ml-2">🌾</span>
+        </motion.h1>
+        <motion.p variants={itemVariants} className="mt-2 text-farm-brown text-center">
+          Drag and drop your tools into categories to keep your tool shed organized
+        </motion.p>
+        
+        {/* Save changes button */}
+        <motion.div 
+          variants={itemVariants}
+          className="mt-6 flex justify-center space-x-4"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/tools')}
+            className="px-4 py-2 bg-farm-brown-light hover:bg-farm-brown text-farm-brown-dark rounded-md border border-farm-brown transition-colors"
+          >
+            Back to Tools
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleSaveChanges}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md"
+            className="px-4 py-2 bg-farm-green hover:bg-farm-green-dark text-white rounded-md border border-farm-green-dark transition-colors flex items-center"
           >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+            </svg>
             Save Changes
-          </button>
-          <button
-            onClick={() => navigate(-1)}
-            className="px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-
-      {saveSuccess && (
-        <div className="mb-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 p-4 rounded-md">
-          Changes saved successfully!
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          </motion.button>
+        </motion.div>
+        
+        <AnimatePresence>
+          {saveSuccess && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mt-4 py-2 px-4 bg-green-100 text-green-800 rounded-md text-center border border-green-200"
+            >
+              Changes saved successfully!
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+      
+      {/* Tool Organizer Grid */}
+      <motion.div 
+        variants={containerVariants}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
         {/* Uncategorized tools */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-          <div className="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="font-medium text-gray-800 dark:text-white flex items-center">
-              <span className="mr-2 text-lg">🔧</span>
-              Uncategorized
-              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                ({(toolsByCategory['Uncategorized'] || []).length})
-              </span>
-            </h2>
+        <motion.div 
+          variants={cardVariants}
+          whileHover="hover"
+          className="farm-panel overflow-hidden"
+        >
+          <div className="farm-panel-title">
+            <span className="mr-2 text-lg">🔧</span>
+            Uncategorized
+            <span className="ml-2 text-sm text-white/80">
+              ({(toolsByCategory['Uncategorized'] || []).length})
+            </span>
           </div>
           
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="divide-y divide-farm-brown-light farm-panel-content">
             {(toolsByCategory['Uncategorized'] || []).length === 0 ? (
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="p-4 text-center text-farm-brown"
+              >
                 No uncategorized tools
-              </div>
+              </motion.div>
             ) : (
-              toolsByCategory['Uncategorized'].map(tool => (
-                <div key={tool.id} className="p-4">
-                  <div className="font-medium text-gray-800 dark:text-white mb-2">{tool.name}</div>
+              (toolsByCategory['Uncategorized'] || []).map(tool => (
+                <motion.div 
+                  key={tool.id} 
+                  className="p-4"
+                  variants={itemVariants}
+                  whileHover={{ backgroundColor: "rgba(188, 170, 164, 0.1)" }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="font-medium text-farm-brown-dark mb-2">{tool.name}</div>
                   
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div>
-                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Category
-                      </label>
-                      <select
-                        value={tool.category || ''}
-                        onChange={(e) => handleUpdateToolCategory(
-                          tool.id!, 
-                          e.target.value || undefined, 
-                          undefined
-                        )}
-                        className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                      >
-                        <option value="">Select a category</option>
-                        {CATEGORIES.map(category => (
-                          <option key={category.name} value={category.name}>
-                            {category.icon} {category.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Subcategory
-                      </label>
-                      <select
-                        value={tool.subcategory || ''}
-                        disabled={!tool.category}
-                        onChange={(e) => handleUpdateToolCategory(
-                          tool.id!, 
-                          tool.category, 
-                          e.target.value || undefined, 
-                        )}
-                        className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-                      >
-                        <option value="">Select a subcategory</option>
-                        {tool.category && getSubcategoriesForCategory(tool.category).map(subcategory => (
-                          <option key={subcategory} value={subcategory}>
-                            {subcategory}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="mb-3">
+                    <label className="block text-xs text-farm-brown mb-1">
+                      Move to Category
+                    </label>
+                    <select
+                      value=""
+                      onChange={(e) => handleUpdateToolCategory(
+                        tool.id!, 
+                        e.target.value || undefined, 
+                        undefined
+                      )}
+                      className="w-full p-2 text-sm border border-farm-brown-light rounded bg-white text-farm-brown-dark focus:border-farm-green"
+                    >
+                      <option value="">Select a category</option>
+                      {CATEGORIES.map(category => (
+                        <option key={category.name} value={category.name}>
+                          {category.icon} {category.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
           </div>
-        </div>
+        </motion.div>
         
-        {/* Categorized tools */}
+        {/* Categories */}
         {CATEGORIES.map(category => {
           const categoryTools = toolsByCategory[category.name] || [];
           return (
-            <div key={category.name} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-              <div className="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="font-medium text-gray-800 dark:text-white flex items-center">
-                  <span className="mr-2 text-lg">{category.icon}</span>
-                  {category.name}
-                  <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                    ({categoryTools.length})
-                  </span>
-                </h2>
+            <motion.div 
+              key={category.name} 
+              variants={cardVariants}
+              whileHover="hover"
+              className="farm-panel overflow-hidden"
+            >
+              <div className="farm-panel-title">
+                <span className="mr-2 text-lg">{category.icon}</span>
+                {category.name}
+                <span className="ml-2 text-sm text-white/80">
+                  ({categoryTools.length})
+                </span>
               </div>
               
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-farm-brown-light farm-panel-content">
                 {categoryTools.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-4 text-center text-farm-brown"
+                  >
                     No tools in this category
-                  </div>
+                  </motion.div>
                 ) : (
                   categoryTools.map(tool => (
-                    <div key={tool.id} className="p-4">
-                      <div className="font-medium text-gray-800 dark:text-white mb-2">{tool.name}</div>
+                    <motion.div 
+                      key={tool.id} 
+                      className="p-4"
+                      variants={itemVariants}
+                      whileHover={{ backgroundColor: "rgba(188, 170, 164, 0.1)" }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="font-medium text-farm-brown-dark mb-2">{tool.name}</div>
                       
                       <div className="mb-2">
-                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        <label className="block text-xs text-farm-brown mb-1">
                           Subcategory
                         </label>
                         <select
@@ -205,7 +275,7 @@ const ToolOrganizerPage: React.FC = () => {
                             tool.category, 
                             e.target.value || undefined
                           )}
-                          className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                          className="w-full p-2 text-sm border border-farm-brown-light rounded bg-white text-farm-brown-dark focus:border-farm-green"
                         >
                           <option value="">No subcategory</option>
                           {getSubcategoriesForCategory(category.name).map(subcategory => (
@@ -216,21 +286,26 @@ const ToolOrganizerPage: React.FC = () => {
                         </select>
                       </div>
                       
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => handleUpdateToolCategory(tool.id!, undefined, undefined)}
-                        className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        className="text-xs text-red-500 hover:text-red-700 flex items-center"
                       >
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
                         Remove from category
-                      </button>
-                    </div>
+                      </motion.button>
+                    </motion.div>
                   ))
                 )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

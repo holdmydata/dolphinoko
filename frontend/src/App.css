@@ -1,3 +1,106 @@
 .App {
     text-align: center;
   }
+
+/* Sidebar styles */
+.sidebar {
+  transition: all 0.3s ease;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 30;
+  position: fixed;
+  height: 100vh;
+  transform: translateX(0); /* Ensure transform is set for transitions */
+}
+
+/* Main content spacing to accommodate sidebar */
+@media (min-width: 768px) {
+  .sidebar {
+    position: fixed;
+    height: 100vh;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 767px) {
+  .sidebar {
+    width: 100% !important; /* Full width on mobile when open */
+    max-width: 280px !important; /* But cap the maximum width */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* When collapsed on mobile, ensure the width is still enough for icons */
+  .sidebar:not(.-translate-x-full) {
+    min-width: 80px;
+  }
+  
+  /* When closed on mobile, hide completely */
+  .sidebar.-translate-x-full {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  /* Add spacing for the mobile menu button */
+  main {
+    padding-top: 3.5rem !important;
+  }
+}
+
+/* Pixel font styles */
+.font-pixel {
+  font-family: 'Press Start 2P', system-ui, sans-serif;
+  letter-spacing: -0.03em;
+}
+
+/* Kawaii color palette */
+:root {
+  --kawaii-purple-50: #f5f3ff;
+  --kawaii-purple-100: #ede9fe;
+  --kawaii-purple-200: #ddd6fe;
+  --kawaii-purple-300: #c4b5fd;
+  --kawaii-purple-400: #a78bfa;
+  --kawaii-purple-500: #8b5cf6;
+  --kawaii-purple-600: #7c3aed;
+  --kawaii-purple-700: #6d28d9;
+  --kawaii-purple-800: #5b21b6;
+  --kawaii-purple-900: #4c1d95;
+  
+  --kawaii-pink-50: #fdf2f8;
+  --kawaii-pink-100: #fce7f3;
+  --kawaii-pink-200: #fbcfe8;
+  --kawaii-pink-300: #f9a8d4;
+  --kawaii-pink-400: #f472b6;
+  --kawaii-pink-500: #ec4899;
+  --kawaii-pink-600: #db2777;
+  --kawaii-pink-700: #be185d;
+  --kawaii-pink-800: #9d174d;
+  --kawaii-pink-900: #831843;
+  
+  --kawaii-green-50: #ecfdf5;
+  --kawaii-green-100: #d1fae5;
+  --kawaii-green-200: #a7f3d0;
+  --kawaii-green-300: #6ee7b7;
+  --kawaii-green-400: #34d399;
+  --kawaii-green-500: #10b981;
+  
+  --kawaii-brown-400: #a8927d;
+  --kawaii-brown-600: #7c6555;
+}
+
+/* Pixel art character styles */
+.pixel-character {
+  image-rendering: pixelated;
+  transform-style: preserve-3d;
+  transform: perspective(1000px);
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}

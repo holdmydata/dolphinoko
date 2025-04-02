@@ -93,17 +93,36 @@ const Chat: React.FC = () => {
   // Callback to add a new tool execution event
   const handleToolExecution = (event: ToolExecutionEvent) => {
     console.log("Tool execution event:", event);
+    
+    // Create a new event object with a unique ID that includes timestamp
+    const uniqueEvent = {
+      ...event,
+      // Add timestamp to the ID to ensure uniqueness
+      id: `${event.id}-${Date.now()}`
+    };
+    
     // Add to state for immediate display
-    setExecutionEvents((prev) => [event, ...prev]);
-
+    setExecutionEvents((prev) => {
+      // Check if we already have this event
+      const existingIndex = prev.findIndex(e => e.id === uniqueEvent.id);
+      if (existingIndex >= 0) {
+        // Update the existing event
+        const updated = [...prev];
+        updated[existingIndex] = uniqueEvent;
+        return updated;
+      } else {
+        // Add as a new event
+        return [uniqueEvent, ...prev];
+      }
+    });
+  
     // Store in local storage for persistence
-    if (event.status !== "pending") {
-      // Only store completed events
-      addStoredEvent(event);
+    if (uniqueEvent.status !== "pending") {
+      addStoredEvent(uniqueEvent);
     }
-
+  
     // Auto-expand monitor when new events occur
-    if (!isMonitorExpanded && event.status !== "pending") {
+    if (!isMonitorExpanded && uniqueEvent.status !== "pending") {
       setIsMonitorExpanded(true);
     }
   };

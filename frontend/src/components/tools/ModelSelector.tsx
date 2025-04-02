@@ -39,8 +39,13 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
       setError(null);
       
       if (provider === 'ollama') {
-        const response = await api.get<{ models: ModelInfo[] }>('/api/models/ollama');
-        setModels(response.models);
+        // Use our new API endpoint
+        const response = await api.get<ModelInfo[]>('/api/tools/models');
+        console.log('Models API response:', response);
+        
+        if (response) {
+          setModels(response);
+        }
       } else {
         setModels([]);
       }

@@ -3,7 +3,7 @@
  */
 
 // API base URL - configurable from environment
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 // Error class for API errors
 class ApiError extends Error {
