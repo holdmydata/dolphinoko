@@ -85,27 +85,24 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    // Two options for scrolling - choose the one that works best for your layout
-  
-    // Option 1: Scroll the message container to the bottom
+    // Try to scroll the message container to the bottom
     if (messagesEndRef.current) {
-      // Get the parent scroll container
-      const scrollContainer = messagesEndRef.current.closest('.overflow-y-auto');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+      setTimeout(() => {
+        // Get the parent scroll container
+        const scrollContainer = messagesEndRef.current?.closest('.overflow-y-auto');
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        } else {
+          // Fallback to scrolling the element into view
+          messagesEndRef.current?.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "end",
+            inline: "nearest" 
+          });
+        }
+      }, 100); // Small delay to ensure content is rendered
     }
-  
-    // Option 2: If option 1 doesn't work well, use this alternative approach
-    // that scrolls the message container into view but doesn't force the window scroll
-    /*
-    messagesEndRef.current?.scrollIntoView({ 
-      behavior: "smooth", 
-      block: "end",    // Try "end" instead of the default 
-      inline: "nearest" 
-    });
-    */
-  }, [messages]);
+  }, [messages, isStreaming, streamingMessage]);
 
   // Add a new useEffect to ensure a chat tool exists when provider/model changes
   useEffect(() => {
@@ -896,7 +893,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-farm-earth-light/10">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-farm-earth-light/10 h-[60vh]" style={{overflowY: 'auto'}}>
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-farm-brown-dark/60">
             <div className="text-center">
@@ -1007,7 +1004,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   >
                     {formatTime(message.timestamp)}
                   </div>
-
+                  
                   {message.role === "assistant" && message.toolExecution && (
                     <button
                       className="ml-2 text-farm-green flex items-center hover:text-farm-green-dark"
@@ -1032,235 +1029,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     </button>
                   )}
                 </div>
-
-                {/* Inline metrics */}
+                
+                {/* Metrics display (if toggled) */}
                 {message.role === "assistant" &&
                   message.toolExecution &&
                   showMetrics[message.id] && (
                     <div className="mt-2 pt-2 border-t border-farm-brown/10 text-xs text-farm-brown/80">
+                      {/* Metrics content here */}
                       <div className="mb-1">
                         <span className="font-medium">Tool:</span>{" "}
                         {message.toolExecution.toolName}
-                        {message.toolExecution.toolId?.startsWith(
-                          "direct-api-call"
-                        ) && (
-                          <span className="text-farm-orange ml-1">
-                            (direct API call)
-                          </span>
-                        )}
                       </div>
-
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
-                        {message.toolExecution.metrics.processingTime !==
-                          undefined && (
-                          <div>
-                            <span>Processing time:</span>{" "}
-                            <span className="font-medium">
-                              {message.toolExecution.metrics.processingTime.toFixed(
-                                0
-                              )}{" "}
-                              ms
-                            </span>
-                          </div>
-                        )}
-
-                        {message.toolExecution.metrics.tokenCount !==
-                          undefined && (
-                          <div>
-                            <span>Tokens:</span>{" "}
-                            <span className="font-medium">
-                              {message.toolExecution.metrics.tokenCount}
-                            </span>
-                          </div>
-                        )}
-
-                        {message.toolExecution.metrics.total_duration !==
-                          undefined && (
-                          <div>
-                            <span>Model time:</span>{" "}
-                            <span className="font-medium">
-                              {(
-                                message.toolExecution.metrics.total_duration /
-                                1e9
-                              ).toFixed(2)}{" "}
-                              s
-                            </span>
-                          </div>
-                        )}
-                        {message.toolExecution?.metrics?.used_memories > 0 && (
-                          <div className="mb-1 text-farm-green-dark">
-                            <span className="font-medium">Memory:</span> Used{" "}
-                            {message.toolExecution.metrics.used_memories}{" "}
-                            relevant memories
-                          </div>
-                        )}
-                        {message.toolExecution.metrics.eval_count !==
-                          undefined && (
-                          <div>
-                            <span>Tokens generated:</span>{" "}
-                            <span className="font-medium">
-                              {message.toolExecution.metrics.eval_count}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Additional metrics that might be available */}
-                      {Object.entries(message.toolExecution.metrics).filter(
-                        ([key]) =>
-                          ![
-                            "processingTime",
-                            "tokenCount",
-                            "total_duration",
-                            "eval_count",
-                            "error",
-                          ].includes(key)
-                      ).length > 0 && (
-                        <div className="mt-2">
-                          <details>
-                            <summary className="cursor-pointer hover:text-farm-green">
-                              Additional metrics
-                            </summary>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1 pl-2">
-                              {Object.entries(message.toolExecution.metrics)
-                                .filter(
-                                  ([key]) =>
-                                    ![
-                                      "processingTime",
-                                      "tokenCount",
-                                      "total_duration",
-                                      "eval_count",
-                                      "error",
-                                    ].includes(key)
-                                )
-                                .map(([key, value]) => (
-                                  <div key={key}>
-                                    <span>{key}:</span>{" "}
-                                    <span className="font-medium">
-                                      {typeof value === "object"
-                                        ? JSON.stringify(value)
-                                        : String(value)}
-                                    </span>
-                                  </div>
-                                ))}
-                            </div>
-                          </details>
-                        </div>
-                      )}
                     </div>
                   )}
               </div>
             </div>
           ))
         )}
-
-        {/* Parameter Collection UI */}
-        {collectingParameters && (
-          <div className="bg-farm-earth-light/30 border border-farm-brown/20 rounded-lg p-4 shadow-sm">
-            <h4 className="font-medium text-farm-brown mb-2 flex items-center">
-              <span className="mr-2">🌱</span>
-              Additional information needed
-            </h4>
-            <p className="text-sm text-farm-brown-dark/80 mb-4">
-              Please provide the following information to continue:
-            </p>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                // Extract form data and submit
-                const formData = new FormData(e.currentTarget);
-                const parameters: Record<string, any> = {};
-
-                collectingParameters.missingParams.forEach((param) => {
-                  const value = formData.get(param.name);
-                  if (value) {
-                    // Convert types as needed
-                    if (param.type === "number") {
-                      parameters[param.name] = Number(value);
-                    } else if (param.type === "boolean") {
-                      parameters[param.name] = value === "true";
-                    } else {
-                      parameters[param.name] = value;
-                    }
-                  }
-                });
-
-                handleParameterSubmit(parameters);
-              }}
-            >
-              <div className="space-y-3">
-                {collectingParameters.missingParams.map((param) => (
-                  <div key={param.name}>
-                    <label className="block text-sm font-medium text-farm-brown mb-1">
-                      {param.name}
-                      {param.required ? " *" : ""}
-                      {param.description && (
-                        <span className="ml-1 text-xs font-normal text-farm-green">
-                          ({param.description})
-                        </span>
-                      )}
-                    </label>
-                    {param.type === "boolean" ? (
-                      <select
-                        name={param.name}
-                        className="w-full px-3 py-2 border border-farm-brown/20 rounded-md focus:outline-none focus:ring-2 focus:ring-farm-green bg-white/90"
-                        required={param.required}
-                      >
-                        <option value="true">True</option>
-                        <option value="false">False</option>
-                      </select>
-                    ) : (
-                      <input
-                        type={param.type === "number" ? "number" : "text"}
-                        name={param.name}
-                        className="w-full px-3 py-2 border border-farm-brown/20 rounded-md focus:outline-none focus:ring-2 focus:ring-farm-green bg-white/90"
-                        required={param.required}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 flex justify-end space-x-2">
-                <button
-                  type="button"
-                  className="px-3 py-1 text-sm border border-farm-brown/20 text-farm-brown rounded-md hover:bg-farm-earth-light/50"
-                  onClick={() => setCollectingParameters(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-3 py-1 text-sm bg-farm-green text-white rounded-md hover:bg-farm-green-dark"
-                >
-                  Plant Information
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
+        
         {/* Auto-scroll anchor */}
         <div ref={messagesEndRef} />
-
-        {/* Loading indicator */}
-        {isLoading && (
-          <div className="flex justify-center items-center p-2">
-            <div className="animate-pulse flex space-x-2">
-              <div className="h-2 w-2 bg-farm-green rounded-full"></div>
-              <div className="h-2 w-2 bg-farm-green rounded-full"></div>
-              <div className="h-2 w-2 bg-farm-green rounded-full"></div>
-            </div>
-          </div>
-        )}
-
-        {/* Error message */}
-        {error && (
-          <div className="p-2 text-center text-farm-orange text-sm">{error}</div>
-        )}
       </div>
-
+      
       {/* Input area */}
       <div className="p-3 border-t border-farm-brown/20 bg-white/80">
         <form

@@ -11,6 +11,7 @@ import {
   clearStoredEvents,
 } from "../utils/toolMonitoringStorage";
 import { useTools } from "../hooks/useTools";
+import { useCharacter } from "../context/CharacterContext";
 import { useConversation } from "../context/ConversationContext";
 import { ensureChatTool } from "../utils/ensureTools";
 import ChatProcessor, { ProcessedMessage } from "../utils/ChatProcessor";
@@ -24,6 +25,7 @@ const Chat: React.FC = () => {
   );
   const [isMonitorExpanded, setIsMonitorExpanded] = useState<boolean>(false);
   const toolContext = useTools();
+  const { selectedCharacter } = useCharacter();
   const chatProcessorRef = useRef<ChatProcessor | null>(null);
   const [messageProcessor, setMessageProcessor] = useState<
     ((message: string) => Promise<ProcessedMessage>) | undefined
@@ -43,12 +45,15 @@ const Chat: React.FC = () => {
     sendMessage,
   } = useConversation();
 
-  // Initialize chat processor and set message processor - SINGLE USEEFFECT
+  // Initialize chat processor and set message processor with character info
   useEffect(() => {
-    console.log("Tool context changed, tools count:", toolContext.tools.length);
+    console.log("Tool context or character changed, tools count:", toolContext.tools.length);
     if (!toolContext.loading && toolContext.tools.length > 0) {
-      console.log("Initializing ChatProcessor with tools");
-      chatProcessorRef.current = new ChatProcessor(toolContext.tools);
+      console.log("Initializing ChatProcessor with tools and character category:", selectedCharacter?.toolCategory);
+      chatProcessorRef.current = new ChatProcessor(
+        toolContext.tools,
+        selectedCharacter?.toolCategory
+      );
 
       // Create a properly typed message processor function
       const processor = async (message: string): Promise<ProcessedMessage> => {
@@ -65,7 +70,7 @@ const Chat: React.FC = () => {
       setMessageProcessor(() => processor);
       console.log("Message processor set");
     }
-  }, [toolContext.loading, toolContext.tools]);
+  }, [toolContext.loading, toolContext.tools, selectedCharacter]);
 
   // Ensure a chat tool exists for the selected provider and model
   useEffect(() => {
@@ -245,7 +250,7 @@ const Chat: React.FC = () => {
             onToolExecution={handleToolExecution}
             messageProcessor={messageProcessor}
             toolContext={toolContext}
-            className="h-[75vh] bg-farm-earth-light/10 border-farm-brown/20 shadow-lg rounded-xl overflow-hidden"
+            className="h-full min-h-[75vh] bg-farm-earth-light/10 border-farm-brown/20 shadow-lg rounded-xl overflow-hidden"
             // Add these props
             conversationId={currentConversationId}
             messages={messages}

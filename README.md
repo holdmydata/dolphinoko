@@ -1,15 +1,40 @@
-# 🐬 Dolphinoko
+# 🐬 Dolphinoko: Friendly Farm of AI Tools
 
-My take on a user-friendly UI for building and using LLM-powered tools via the Dolphin Model Context Protocol (MCP) developed by [Eric Hartford](https://github.com/cognitivecomputations/dolphin-mcp) and Cognitive Computations. The toolbox is designed to be a simple, intuitive way to create and manage AI tools powered by local models, with optional integration with cloud models like Claude. The UI is inspired by classic software design, with a clean, retro aesthetic that harkens back to the days of Windows 95 and early 2000s software because I'm about damn tired of SaSS. The backend is built with FastAPI and the frontend with React/TypeScript, with a focus on clean, modular code and a clear separation between the two for some of us that think a little crazier.
+Dolphinoko is a delightful farm-themed user interface for building and using LLM-powered agents via the Dolphin Model Context Protocol (MCP). Create and deploy character-based AI helpers with different specialties, organize them visually, and enjoy interacting with them through an accessible, warm interface. The tooling is built on local models with Ollama, with optional cloud model integration.
 
-![Dolphinoko](./frontend/public/assets/dolphinoko1.jpg)
+![Dolphinoko Farm](./frontend/public/assets/dolphinoko_farm.jpg)
+*(Note: You'll need to add a new screenshot that shows the current farm interface)*
+
 ## 🚀 Features
 
-- 🛠️ Create and manage AI tools powered by local models
-- 🏠 Run everything locally with Ollama
+- 🐱 Character-based AI agents with different specialties and personalities
+- 🧰 Powerful tool creation and categorization system 
+- 🌾 Farm-themed, accessible UI with improved usability
+- 🏠 Run everything locally with Ollama models
 - ☁️ Optional integration with cloud models like Claude
-- 📱 Clean, intuitive UI inspired by classic software design
-- 🔧 Use MCP protocol for flexible model interaction
+- 🔄 Seamless character-tool integration for intelligent responses
+
+## 🌟 What's New in v2.0
+
+### 🌾 Farm-Themed Interface
+- Complete UI redesign with a cozy farm aesthetic
+- Improved accessibility and readability
+- Better mobile responsiveness
+
+### 🐱 Character-Based Agent System
+- Create and customize animal characters as AI assistants
+- Each character specializes in different tool categories
+- Visual character creator with customization options
+
+### 🧰 Enhanced Tool Management
+- Improved tool categorization and organization
+- Better tool search and discovery
+- Seamless integration between tools and characters
+
+### 💬 Improved Chat Experience
+- Fixed scrolling and display issues in chat interface
+- Enhanced tool execution directly within chat
+- Better message rendering and formatting
 
 ## 📋 Prerequisites
 
@@ -19,42 +44,13 @@ My take on a user-friendly UI for building and using LLM-powered tools via the D
 - [dolphin-mcp](https://github.com/cognitivecomputations/dolphin-mcp) (installed automatically)
 
 ## ⚠️ NOTICE:
-Literally following the advice to "Just ship it." This is AS IS, but shouldn't break anything by itself. NO responsibility for any damage, loss, or anything else. Use at your own risk. I'm scared myself. :D
+This is an experimental project provided AS IS. Use at your own risk. There may still be bugs and issues, but we're actively working to improve it!
 
-Lots of bugs and issues, but I'm working on it. If you want to help, please do! Primary next steps will be:
-- Anthropic integration finish
-- Dark mode because my eyes just can't anymore (and styling in general)
-- Better error handling
-- Tool management improvements including fixes to category
-- Neo4J integration for tool storage
-
-## Version 1.1.0 (3/14/2025)
-
-### 🌓 Dark Mode
-- Added full dark mode support across the application
-- Implemented theme toggle in settings menu
-- Automatically respects system theme preferences
-
-### 💬 Enhanced Chat Experience
-- Hopefully fixed tool execution directly within chat interface
-- Improved message rendering and formatting
-- Added message QoL improvements
-
-### 📊 Metrics & Analytics
-- Implemented comprehensive usage metrics
-- Added dashboard for tracking conversation statistics
-- Improved performance monitoring and reporting
-
-### 🧰 Other Improvements
-- Enhanced error handling and reporting
-- Fixed various UI/UX inconsistencies
-- Improved mobile responsiveness
-- General performance optimizations
-
-### 🐞 Bug Fixes
-- Resolved issues with message persistence
-- Fixed layout problems in conversation history
-- Addressed memory leaks in long-running sessions
+Current development priorities:
+- Finishing Anthropic integration
+- Adding more character types and customization options
+- Improving tool categories and persistence
+- Enhanced context handling between characters and tools
 
 ## 🔧 Installation
 
@@ -111,8 +107,18 @@ npm run dev
 ## 🔄 Using with Ollama
 
 1. [Install Ollama](https://ollama.ai/download) if you haven't already
-2. Pull a model, e.g.: `ollama pull llama3`
-3. Make sure Ollama is running when you use the toolbox
+2. Pull a model, e.g.: `ollama pull dolphin-llama3` or `ollama pull gemma:7b`
+3. Make sure Ollama is running when you use Dolphinoko
+
+## 🐱 Working with Character Agents
+
+1. Navigate to the Character Creator page
+2. Design your character:
+   - Choose an animal type (cat, dog, bird, etc.)
+   - Select a color and give them a name
+   - Assign a role and toolCategory that fits their specialty
+3. Save your character
+4. Visit the Island or Chat page to interact with your new assistant!
 
 ## 🛠️ Building Your First Tool
 
@@ -122,38 +128,45 @@ npm run dev
    - Name: A descriptive name for your tool
    - Provider: Choose "Ollama" for local models
    - Model: Select a model you've pulled to Ollama
+   - Category: Select a category that matches a character's toolCategory
    - Prompt Template: Create a template using `{input}` as placeholder for user input
 4. Save your tool
-5. Go to Dashboard to test your tool!
+5. Use the Tool Organizer to properly categorize your tools
+6. Interact with the appropriate character to utilize your tool!
 
 ## 📦 Project Structure
 
 The project is organized with a clear separation between backend and frontend:
 
 ```
-dolphin-mcp-toolbox/
+dolphinoko/
 ├── backend/              # FastAPI Python backend
 ├── frontend/             # React/TypeScript frontend
-├── scripts/              # Utility scripts
+│   ├── src/
+│   │   ├── components/   # UI components
+│   │   ├── context/      # Context providers
+│   │   ├── pages/        # Application pages
+│   │   └── utils/        # Utility functions
 └── README.md
 ```
 
 ## 📝 Customization
 
-- **Adding more providers**: Extend the `providers` dictionary in `backend/services/mcp_service.py`
-- **UI Theme**: Modify the Tailwind theme in `frontend/tailwind.config.js`
-- **Adding new tools**: Create new tool definitions in the Tool Builder
+- **UI Theme**: The farm theme can be customized in `frontend/src/styles/theme.ts`
+- **Characters**: Modify available character types in `frontend/src/context/CharacterContext.tsx`
+- **Tool Categories**: Edit categories in `frontend/src/types/categories.ts`
+- **Adding more providers**: Extend the providers in `backend/services/mcp_service.py`
 
 ## 👥 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Feel free to submit a Pull Request or open an Issue for bugs and feature requests.
 
 ## 📄 License
 
-MIT? I think? Depends on what the MCP is and what model you use. Everything else is MIT.
+MIT License (for our code). Models and third-party libraries maintain their own licensing.
 
 ## 🙏 Acknowledgments
 
 - [Eric's Dolphin MCP](https://github.com/cognitivecomputations/dolphin-mcp) for the underlying MCP implementation
 - [Ollama](https://ollama.ai/) for the local model inference
-- The 90s/2000s software packaging aesthetic for inspiration
+- The farming and kawaii aesthetics that inspired our new UI

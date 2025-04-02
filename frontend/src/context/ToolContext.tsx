@@ -110,7 +110,16 @@ export const ToolProvider: React.FC<{ children: React.ReactNode }> = ({
   
   const updateTool = async (id: string, tool: Tool): Promise<Tool> => {
     try {
-      const response = await api.put<Tool>(`/api/tools/${id}`, tool);
+      // Make sure category and subcategory are properly included
+      const toolToUpdate = {
+        ...tool,
+        category: tool.category || undefined,
+        subcategory: tool.subcategory || undefined
+      };
+      
+      console.log("Updating tool with data:", toolToUpdate); // Add logging
+      
+      const response = await api.put<Tool>(`/api/tools/${id}`, toolToUpdate);
       
       // Reload tools on the server
       await api.post("/api/tools/reload", {});

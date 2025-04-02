@@ -41,10 +41,13 @@ export interface ProcessedMessage {
 
 class ChatProcessor {
     private tools: Tool[];
+    private characterToolCategory?: string;
     private model: SimpleKeywordModel; // Optional: A small model for intent detection
 
-    constructor(tools: Tool[]) {
+    constructor(tools: Tool[], characterToolCategory?: string) {
       this.tools = tools;
+      this.characterToolCategory = characterToolCategory;
+      console.log(`ChatProcessor initialized with ${tools.length} tools, character category: ${characterToolCategory || 'none'}`);
       // Optionally initialize a small model for intent detection
       this.model = new SimpleKeywordModel();
     }
@@ -55,7 +58,25 @@ class ChatProcessor {
         return this.handleExplicitToolCall(message);
       }
       
-      // Otherwise, try to detect intent and match to tools
+      // First, prioritize tools matching the character's toolCategory
+      if (this.characterToolCategory) {
+        console.log(`Looking for tools in character category: ${this.characterToolCategory}`);
+        const categoryTools = this.tools.filter(tool => 
+          tool.category?.toLowerCase() === this.characterToolCategory?.toLowerCase()
+        );
+        
+        console.log(`Found ${categoryTools.length} tools matching character category`);
+        
+        if (categoryTools.length > 0) {
+          const matchedTool = await this.detectToolIntentInTools(message, categoryTools);
+          if (matchedTool) {
+            console.log(`Matched character-specific tool: ${matchedTool.name}`);
+            return this.handleImplicitToolCall(message, matchedTool);
+          }
+        }
+      }
+      
+      // If no character-specific tool matched, fall back to all tools
       const matchedTool = await this.detectToolIntent(message);
       if (matchedTool) {
         return this.handleImplicitToolCall(message, matchedTool);
@@ -270,6 +291,54 @@ class ChatProcessor {
             missingParameters: missingParams
           };
         }
+      }
+
+      // New method to detect intent in a specific subset of tools
+      private async detectToolIntentInTools(message: string, toolsSubset: Tool[]): Promise<Tool | null> {
+        // Simple keyword matching for now
+        // In a real implementation, this would use a more sophisticated matching algorithm,
+        // possibly using embeddings or a dedicated intent detection model
+        
+        const normalizedMessage = message.toLowerCase();
+        
+        // First look for activation phrases exact matches
+        for (const tool of toolsSubset) {
+          if (tool.activation_phrases && tool.activation_phrases.length > 0) {
+            for (const phrase of tool.activation_phrases) {
+              if (normalizedMessage.includes(phrase.toLowerCase())) {
+                console.log(`Message matched activation phrase "${phrase}" for tool "${tool.name}"`);
+                return tool;
+              }
+            }
+          }
+        }
+        
+        // Then try to match against tool name and description
+        for (const tool of toolsSubset) {
+          const toolName = tool.name.toLowerCase();
+          const toolDesc = (tool.description || '').toLowerCase();
+          
+          // Check if any words in the tool name are in the message
+          const nameWords = toolName.split(/\s+/).filter(w => w.length > 3);
+          const descWords = toolDesc.split(/\s+/).filter(w => w.length > 3);
+          
+          for (const word of nameWords) {
+            if (normalizedMessage.includes(word)) {
+              console.log(`Message contains tool name word "${word}" for tool "${tool.name}"`);
+              return tool;
+            }
+          }
+          
+          // Check for description keywords
+          for (const word of descWords) {
+            if (normalizedMessage.includes(word)) {
+              console.log(`Message contains description word "${word}" for tool "${tool.name}"`);
+              return tool;
+            }
+          }
+        }
+        
+        return null;
       }
 }
 

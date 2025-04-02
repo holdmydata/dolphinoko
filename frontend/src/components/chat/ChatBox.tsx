@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 
@@ -15,11 +15,11 @@ interface Message {
   timestamp: Date;
 }
 
-const ChatBox: React.FC<ChatBoxProps> = ({ 
+const ChatBox = forwardRef<{ addCharacterMessage: (message: string) => void; setTyping: (typing: boolean) => void; }, ChatBoxProps>(({ 
   characterName, 
   onSubmit,
   characterExpression = '(◕‿◕)'
-}) => {
+}, ref) => {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -32,6 +32,29 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Method to add a character message from outside
+  const addCharacterMessage = (message: string) => {
+    const characterMessage: Message = {
+      id: Date.now().toString(),
+      text: message,
+      sender: 'character',
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, characterMessage]);
+    setIsTyping(false); // Stop typing indicator when response arrives
+  };
+
+  // Expose methods to parent components
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      addCharacterMessage,
+      setTyping: (typing: boolean) => setIsTyping(typing)
+    }),
+    []
+  );
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -61,34 +84,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     };
     
     setMessages(prev => [...prev, userMessage]);
-    onSubmit(inputValue);
+    onSubmit(inputValue); // This function should handle actual tool execution
     setInputValue('');
     
     // Show typing indicator
     setIsTyping(true);
-    
-    // Simulate character response with delay
-    setTimeout(() => {
-      setIsTyping(false);
-      
-      const responses = [
-        "I'll help you with that right away!",
-        "Let me think about that for a moment...",
-        "That's a great question!",
-        "I've got just the solution for you!",
-        "I'm working on it! Give me a moment.",
-        "はい！ Yes, I can definitely assist with that!"
-      ];
-      
-      const characterMessage: Message = {
-        id: Date.now().toString(),
-        text: responses[Math.floor(Math.random() * responses.length)],
-        sender: 'character',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, characterMessage]);
-    }, 1500);
   };
 
   return (
@@ -125,7 +125,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       </div>
 
       {/* Chat messages */}
-      <div className="flex-grow p-4 overflow-y-auto bg-farm-wood-light/20 backdrop-blur-sm">
+      <div className="flex-grow p-4 overflow-y-auto bg-farm-wood-light/20 backdrop-blur-sm h-[calc(100vh-240px)]" style={{overflowY: 'auto'}}>
         {messages.map((message) => (
           <motion.div 
             key={message.id}
@@ -226,6 +226,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       </form>
     </div>
   );
-};
+});
 
 export default ChatBox; 
