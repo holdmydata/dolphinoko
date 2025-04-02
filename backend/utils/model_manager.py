@@ -22,7 +22,7 @@ class OllamaModelManager:
     
     def __init__(self, base_url: str = None):
         """Initialize with Ollama API URL"""
-        self.base_url = base_url or os.getenv("OLLAMA_API_URL", "http://localhost:8000")
+        self.base_url = base_url or os.getenv("OLLAMA_API_URL", "http://localhost:11434")
         logger.info(f"Using Ollama API at: {self.base_url}")
     
     def list_models(self) -> List[Dict[str, Any]]:
@@ -100,4 +100,11 @@ if __name__ == "__main__":
         models = manager.list_models()
         print(f"\nAvailable models ({len(models)}):")
         for i, model in enumerate(models, 1):
-            print(f"{i}. {model.get('name')} - {model.get('size', 'N/A')}") 
+            print(f"{i}. {model.get('name')} - {model.get('size', 'N/A')}")
+
+def pull_model(model_name: str) -> bool:
+    """Pull a model using OllamaModelManager"""
+    manager = OllamaModelManager(
+        base_url=os.getenv("OLLAMA_API_URL", "http://localhost:11434")
+    )
+    return manager.pull_model(model_name) 

@@ -13,6 +13,33 @@ export default {
           100: '#E2E2D5',
           200: '#888883',
         },
+        // Farm theme colors
+        'farm-green': {
+          DEFAULT: '#5D9C59',
+          dark: '#4A7F48',
+          light: '#8FB58A',
+        },
+        'farm-brown': {
+          DEFAULT: '#7D5A50',
+          dark: '#5F4339',
+          light: '#A68778',
+        },
+        'farm-earth': {
+          DEFAULT: '#B99470',
+          light: '#E5D3B3',
+          dark: '#8B6D4F',
+        },
+        'farm-blue': {
+          DEFAULT: '#91C8E4',
+          light: '#E0F4FF',
+          dark: '#749BC2',
+        },
+        'farm-orange': '#F97B22',
+        'farm-wood': {
+          DEFAULT: '#C8AE7D',
+          light: '#EBE3CC',
+          dark: '#9F8A5C',
+        },
         // Kawaii theme colors
         'kawaii-pink': {
           50: '#FFF5F9',

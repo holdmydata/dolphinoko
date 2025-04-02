@@ -10,8 +10,8 @@ class EmbeddingService:
     
     def __init__(self, base_url: str = None):
         """Initialize Embedding service with base URL"""
-        # Using the same Ollama endpoint by default
-        self.base_url = base_url or os.environ.get("OLLAMA_API_URL", "http://localhost:11434")
+        # Hardcoding for now to ensure correct URL
+        self.base_url = "http://localhost:11434"
         logger.info(f"Initialized Embedding service with base URL: {self.base_url}")
         # Default embedding model
         self.default_model = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text:latest")

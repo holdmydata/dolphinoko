@@ -5,6 +5,7 @@ import uuid
 import time
 import logging
 import os
+from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from services.storage_service import load_tools as load_tools_json, save_tools as save_tools_json
 from services.sqlite_storage import SQLiteStorage
@@ -15,6 +16,9 @@ from routes.conversation_routes import router as conversation_router
 from routes.model_routes import router as model_router
 from routes.tool_routes import router as tool_router
 from routes.search_routes import router as search_router
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -297,8 +301,8 @@ async def get_ollama_models():
     try:
         from services.ollama_service import OllamaService
         
-        # Create service instance
-        service = OllamaService()
+        # Create service instance with explicit URL
+        service = OllamaService(base_url="http://localhost:11434")
         
         # Get models
         models = await service.list_models()
@@ -355,6 +359,47 @@ async def reload_tools():
         logger.error(f"Failed to reload tools: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to reload tools: {str(e)}") 
     
+@app.get("/api/debug/ollama-status")
+async def check_ollama_status():
+    """Check the status of the Ollama connection"""
+    try:
+        from services.ollama_service import OllamaService
+        service = OllamaService(base_url="http://localhost:11434") 
+        
+        # Log the base URL being used
+        logger.info(f"Debug: OllamaService using base URL: {service.base_url}")
+        
+        # Test environment variable
+        env_value = os.getenv("OLLAMA_API_URL", "Not set")
+        logger.info(f"Debug: OLLAMA_API_URL from environment: {env_value}")
+        
+        # Check Ollama connectivity
+        models = await service.list_models()
+        
+        if models:
+            return {
+                "status": "online",
+                "base_url": service.base_url,
+                "env_url": env_value,
+                "model_count": len(models),
+                "models": [m.get("name") for m in models[:5]] if len(models) > 0 else []
+            }
+        else:
+            return {
+                "status": "online_no_models",
+                "base_url": service.base_url,
+                "env_url": env_value,
+                "message": "Connected to Ollama, but no models found."
+            }
+    except Exception as e:
+        logger.error(f"Error checking Ollama status: {str(e)}")
+        return {
+            "status": "error",
+            "base_url": "http://localhost:11434",
+            "env_url": os.getenv("OLLAMA_API_URL", "Not set"),
+            "error": str(e)
+        }
+
 # Run the app
 if __name__ == "__main__":
     import uvicorn

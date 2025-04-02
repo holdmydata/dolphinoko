@@ -15,7 +15,25 @@ class OllamaService:
     
     def __init__(self, base_url: str = None):
         """Initialize Ollama service with base URL"""
-        self.base_url = base_url or os.environ.get("OLLAMA_API_URL", "http://localhost:8000")
+        # Get URL from parameter, environment, or default
+        from_env = os.environ.get("OLLAMA_API_URL")
+        from_getenv = os.getenv("OLLAMA_API_URL")
+        
+        # Log what we're seeing
+        logger.info(f"Ollama init - base_url param: {base_url}")
+        logger.info(f"Ollama init - os.environ.get: {from_env}")
+        logger.info(f"Ollama init - os.getenv: {from_getenv}")
+        
+        # Final URL determination with fallback
+        if base_url:
+            self.base_url = base_url
+        elif from_env:
+            self.base_url = from_env
+        elif from_getenv:
+            self.base_url = from_getenv
+        else:
+            self.base_url = "http://localhost:11434"  # Default
+        
         logger.info(f"Initialized Ollama service with base URL: {self.base_url}")
     
     async def list_models(self) -> List[Dict[str, Any]]:

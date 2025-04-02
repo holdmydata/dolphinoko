@@ -75,8 +75,7 @@ def get_memory_service():
 
 def get_ollama_service():
     """Dependency to get the Ollama service"""
-    from services.ollama_service import OllamaService
-    return OllamaService()
+    return OllamaService(base_url="http://localhost:11434")
 
 # Get tools function using storage_service
 @router.get("", response_model=List[Dict[str, Any]])

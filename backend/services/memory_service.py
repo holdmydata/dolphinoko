@@ -11,7 +11,7 @@ class MemoryService:
     """Service for managing conversation memory with embeddings"""
     
     def __init__(self):
-        self.embedding_service = EmbeddingService()
+        self.embedding_service = EmbeddingService(base_url="http://localhost:11434")
         # Initialize your chosen storage backend
         self.storage = SQLiteEmbeddingStorage()  # or FAISSEmbeddingStorage, ChromaEmbeddingStorage, etc.
     

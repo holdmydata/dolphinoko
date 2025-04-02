@@ -13,6 +13,7 @@ interface Settings {
   theme: "light" | "dark" | "system";
   defaultProvider: string;
   enableNeo4j: boolean;
+  defaultModel: string;
 }
 
 const Settings: React.FC = () => {
@@ -29,6 +30,7 @@ const Settings: React.FC = () => {
     theme: "light",
     defaultProvider: "ollama",
     enableNeo4j: false,
+    defaultModel: "dolphin3:latest"
   };
 
   // Load settings from localStorage or use defaults
@@ -162,6 +164,28 @@ const Settings: React.FC = () => {
                 The URL of your local Ollama server
               </p>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Default Model
+              </label>
+              <select
+                name="defaultModel"
+                value={settings.defaultModel}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="dolphin3:latest">dolphin3 (recommended)</option>
+                <option value="llama3:latest">llama3</option>
+                <option value="mistral:latest">mistral</option>
+                <option value="mixtral:latest">mixtral</option>
+                <option value="phi3:latest">phi3</option>
+                <option value="llama2:latest">llama2 (legacy)</option>
+              </select>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Default model to use for chat and characters
+              </p>
+            </div>
           </div>
         </section>
 
@@ -269,6 +293,70 @@ const Settings: React.FC = () => {
             installation. SQLite is used by default.
           </p>
         </section>
+
+        {/* Model Documentation Section */}
+        <section className="mb-8">
+          <h2 className="text-xl text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
+            Model Documentation
+          </h2>
+          
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Recommended Ollama Models
+              </h3>
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+                <ul className="list-disc pl-5 space-y-2 text-gray-600 dark:text-gray-300">
+                  <li><strong>dolphin3:latest</strong> - Recommended for chat and most tasks, provides well-formatted and helpful responses</li>
+                  <li><strong>mistral:latest</strong> - Good general purpose model</li>
+                  <li><strong>llama3:latest</strong> - Meta's newest model, good for variety of tasks</li>
+                  <li><strong>mixtral:latest</strong> - Stronger reasoning capabilities</li>
+                  <li><strong>phi3:latest</strong> - Microsoft's compact but capable model</li>
+                </ul>
+                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                  Command to pull models: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">ollama pull model_name</code>
+                </p>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Troubleshooting Chat Responses
+              </h3>
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+                <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-1">If responses are too short:</h4>
+                <ul className="list-disc pl-5 space-y-1 text-gray-600 dark:text-gray-300 mb-3">
+                  <li>Try increasing the <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">max_tokens</code> parameter (default is now 2000)</li>
+                  <li>Try a different model (dolphin3 is generally recommended)</li>
+                  <li>Make sure Ollama is running with sufficient resources</li>
+                </ul>
+                
+                <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-1">If responses lack creativity:</h4>
+                <ul className="list-disc pl-5 space-y-1 text-gray-600 dark:text-gray-300">
+                  <li>Try increasing <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">temperature</code> to 0.8-1.0</li>
+                  <li>Add more context in your prompts</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Character Integration
+              </h3>
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md text-gray-600 dark:text-gray-300">
+                <p className="mb-2">
+                  Characters use the same model as your chat. For best results with character interactions:
+                </p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Create a chat tool with your preferred model</li>
+                  <li>Select that same model when interacting with characters</li>
+                  <li>Character personalities work best with more capable models (dolphin3, mixtral)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Actions */}
         <div className="flex justify-between items-center">
           <button

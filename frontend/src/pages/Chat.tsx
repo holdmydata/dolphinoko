@@ -157,11 +157,11 @@ const Chat: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200">
-          AI Chat
+        <h1 className="text-3xl font-bold text-farm-brown">
+          Farmer's Chat Station
         </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Chat with AI models and automatically detect when to use tools
+        <p className="mt-2 text-farm-brown-dark/80">
+          Chat with AI models to help with your farming and tool tasks
         </p>
       </div>
 
@@ -169,7 +169,7 @@ const Chat: React.FC = () => {
         {/* Sidebar with model selection */}
         <div className="col-span-1">
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-500 mb-1">
+            <label className="block text-sm font-medium text-farm-brown mb-1">
               Provider
             </label>
             <select
@@ -178,7 +178,7 @@ const Chat: React.FC = () => {
                 setSelectedProvider(e.target.value);
                 setSelectedModel(""); // Reset model when provider changes
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-farm-brown/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-farm-green bg-white/90"
             >
               {providers.map((provider) => (
                 <option key={provider.value} value={provider.value}>
@@ -195,17 +195,27 @@ const Chat: React.FC = () => {
             className="mb-4"
           />
 
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-600 mb-4">
-            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">
-              Tips
+          <div className="bg-farm-earth-light/50 p-4 rounded-lg border border-farm-brown/20 mb-4 shadow-sm">
+            <h3 className="text-sm font-medium text-farm-brown mb-2 flex items-center">
+              <span className="mr-2 text-lg">🌱</span>Planting Tips
             </h3>
-            <ul className="text-xs text-gray-800 dark:text-gray-200 space-y-1">
-              <li>• Select a model from the list</li>
-              <li>• Tools are automatically detected based on your messages</li>
-              <li>
-                • You can use /tool_name to directly invoke a specific tool
+            <ul className="text-sm text-farm-brown space-y-2">
+              <li className="flex items-start">
+                <span className="mr-2 text-farm-green">•</span> 
+                <span>Select a model to help with your farming</span>
               </li>
-              <li>• Press Enter to send messages (Shift+Enter for new line)</li>
+              <li className="flex items-start">
+                <span className="mr-2 text-farm-green">•</span> 
+                <span>Tools are automatically detected based on your needs</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 text-farm-green">•</span> 
+                <span>Use /tool_name to directly call a specific tool</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 text-farm-green">•</span> 
+                <span>Press Enter to send (Shift+Enter for new line)</span>
+              </li>
             </ul>
           </div>
 
@@ -220,9 +230,9 @@ const Chat: React.FC = () => {
           {executionEvents.length > 0 && (
             <button
               onClick={clearExecutionEvents}
-              className="w-full text-sm text-red-600 hover:text-red-800"
+              className="w-full text-sm text-farm-brown-dark/80 hover:text-farm-brown-dark border border-farm-brown/20 rounded-lg p-2 transition-colors bg-white/50 hover:bg-white/80"
             >
-              Clear Execution History
+              Clear Tool History
             </button>
           )}
         </div>
@@ -235,7 +245,7 @@ const Chat: React.FC = () => {
             onToolExecution={handleToolExecution}
             messageProcessor={messageProcessor}
             toolContext={toolContext}
-            className="h-[75vh]"
+            className="h-[75vh] bg-farm-earth-light/10 border-farm-brown/20 shadow-lg rounded-xl overflow-hidden"
             // Add these props
             conversationId={currentConversationId}
             messages={messages}

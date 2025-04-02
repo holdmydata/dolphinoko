@@ -35,7 +35,7 @@ class StreamRequest(BaseModel):
 
 # Service dependencies
 def get_ollama_service():
-    return OllamaService()
+    return OllamaService(base_url="http://localhost:11434")
 
 def get_memory_service():
     return MemoryService()
@@ -48,8 +48,8 @@ async def chat_with_ollama(
 ):
     """Chat with Ollama model with memory integration"""
     try:
-        # Create Ollama service
-        ollama_service = OllamaService()
+        # Create Ollama service with explicit URL
+        ollama_service = OllamaService(base_url="http://localhost:11434")
         
         # Generate response with memory if conversation_id is provided
         if request.conversation_id:

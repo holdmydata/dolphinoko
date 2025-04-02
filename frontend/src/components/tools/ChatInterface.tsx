@@ -432,7 +432,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           parameters: {
             model: modelName,
             temperature: 0.7,
-            max_tokens: 1000,
+            max_tokens: 2000,
+            top_p: 0.9
           },
           conversation_id: conversationId || v4(),
         };
@@ -485,7 +486,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             message: userMessage.content,
             parameters: {
               temperature: 0.7,
-              max_tokens: 1000,
+              max_tokens: 2000,
+              top_p: 0.9
             },
             // Add conversation_id for memory
             conversation_id: conversationId,
@@ -498,6 +500,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             parameters: {
               model: modelName,
               provider: provider,
+              temperature: 0.7,
+              max_tokens: 2000,
+              top_p: 0.9
             },
             // Add conversation_id for memory
             conversation_id: conversationId,
@@ -873,31 +878,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   return (
-    <Card className={`flex flex-col h-full ${className}`} noPadding>
-      {/* Chat header */}
-      <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-        <div className="flex items-center">
-          <h3 className="text-lg font-medium text-gray-800">Chat</h3>
-          {modelName && (
-            <Badge variant="primary" size="sm" className="ml-2">
-              {modelName}
-            </Badge>
-          )}
-        </div>
+    <Card className={`flex flex-col ${className}`}>
+      {/* Clear chat button */}
+      <div className="flex justify-between items-center p-3 border-b border-farm-brown/20 bg-farm-earth-light/50">
+        <h2 className="text-lg font-semibold text-farm-brown flex items-center">
+          <span className="mr-2">🚜</span>
+          {modelName || "Select a model"}
+        </h2>
         <Button
           variant="ghost"
-          size="sm"
           onClick={clearChat}
+          className="text-farm-brown-dark/70 hover:text-farm-brown-dark"
           disabled={messages.length === 0}
         >
-          Clear
+          Clear Field
         </Button>
       </div>
 
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-farm-earth-light/10">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-400">
+          <div className="h-full flex flex-col items-center justify-center text-farm-brown-dark/60">
             <div className="text-center">
               <svg
                 className="w-12 h-12 mx-auto mb-3"
@@ -911,7 +912,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 />
               </svg>
               <p className="text-lg">
-                Start a conversation with {modelName || "the AI"}
+                Start growing a conversation with {modelName || "the Farm AI"}
               </p>
             </div>
 
@@ -923,20 +924,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   t.name.toLowerCase().includes("chat") &&
                   t.provider === provider
               ) && (
-                <div className="mt-6 w-full max-w-md p-3 bg-yellow-50 border border-yellow-100 rounded-md text-sm text-yellow-800">
-                  <p className="font-medium mb-1">Monitoring Tip:</p>
+                <div className="mt-6 w-full max-w-md p-3 bg-farm-earth-light/50 border border-farm-brown/20 rounded-md text-sm text-farm-brown">
+                  <p className="font-medium mb-1">Farming Tip:</p>
                   <p>
-                    For better metrics and monitoring, you can create a chat
-                    tool.
+                    For better harvesting of information, you can create a chat tool.
                   </p>
                   <button
                     onClick={() =>
                       ensureChatTool(toolContext, provider, modelName)
                     }
-                    className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700"
+                    className="mt-2 px-3 py-1 bg-farm-green text-white rounded-md text-xs hover:bg-farm-green-dark"
                     disabled={toolContext.loading}
                   >
-                    Create Chat Tool for {provider}
+                    Plant Chat Tool for {provider}
                   </button>
                 </div>
               )}
@@ -952,9 +952,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div
                 className={`max-w-3/4 rounded-lg px-4 py-2 ${
                   message.role === "user"
-                    ? "bg-blue-100 text-blue-900"
-                    : "bg-gray-100 text-gray-900"
-                }`}
+                    ? "bg-farm-green-light text-farm-brown-dark"
+                    : "bg-farm-earth-light text-farm-brown-dark"
+                } border border-farm-brown/10 shadow-sm`}
               >
                 <div className="markdown-content">
                   <ReactMarkdown
@@ -1001,8 +1001,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <div
                     className={`${
                       message.role === "user"
-                        ? "text-blue-600"
-                        : "text-gray-500"
+                        ? "text-farm-green-dark"
+                        : "text-farm-brown/70"
                     }`}
                   >
                     {formatTime(message.timestamp)}
@@ -1010,7 +1010,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                   {message.role === "assistant" && message.toolExecution && (
                     <button
-                      className="ml-2 text-blue-600 flex items-center hover:text-blue-800"
+                      className="ml-2 text-farm-green flex items-center hover:text-farm-green-dark"
                       onClick={() => toggleMetrics(message.id)}
                     >
                       <span className="mr-1">Metrics</span>
@@ -1037,14 +1037,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 {message.role === "assistant" &&
                   message.toolExecution &&
                   showMetrics[message.id] && (
-                    <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
+                    <div className="mt-2 pt-2 border-t border-farm-brown/10 text-xs text-farm-brown/80">
                       <div className="mb-1">
                         <span className="font-medium">Tool:</span>{" "}
                         {message.toolExecution.toolName}
                         {message.toolExecution.toolId?.startsWith(
                           "direct-api-call"
                         ) && (
-                          <span className="text-yellow-600 ml-1">
+                          <span className="text-farm-orange ml-1">
                             (direct API call)
                           </span>
                         )}
@@ -1088,7 +1088,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           </div>
                         )}
                         {message.toolExecution?.metrics?.used_memories > 0 && (
-                          <div className="mb-1 text-emerald-700">
+                          <div className="mb-1 text-farm-green-dark">
                             <span className="font-medium">Memory:</span> Used{" "}
                             {message.toolExecution.metrics.used_memories}{" "}
                             relevant memories
@@ -1118,7 +1118,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       ).length > 0 && (
                         <div className="mt-2">
                           <details>
-                            <summary className="cursor-pointer hover:text-blue-600">
+                            <summary className="cursor-pointer hover:text-farm-green">
                               Additional metrics
                             </summary>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1 pl-2">
@@ -1156,11 +1156,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {/* Parameter Collection UI */}
         {collectingParameters && (
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-            <h4 className="font-medium text-blue-800 mb-2">
+          <div className="bg-farm-earth-light/30 border border-farm-brown/20 rounded-lg p-4 shadow-sm">
+            <h4 className="font-medium text-farm-brown mb-2 flex items-center">
+              <span className="mr-2">🌱</span>
               Additional information needed
             </h4>
-            <p className="text-sm text-blue-700 mb-4">
+            <p className="text-sm text-farm-brown-dark/80 mb-4">
               Please provide the following information to continue:
             </p>
 
@@ -1191,11 +1192,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div className="space-y-3">
                 {collectingParameters.missingParams.map((param) => (
                   <div key={param.name}>
-                    <label className="block text-sm font-medium text-blue-700 mb-1">
+                    <label className="block text-sm font-medium text-farm-brown mb-1">
                       {param.name}
                       {param.required ? " *" : ""}
                       {param.description && (
-                        <span className="ml-1 text-xs font-normal text-blue-500">
+                        <span className="ml-1 text-xs font-normal text-farm-green">
                           ({param.description})
                         </span>
                       )}
@@ -1203,7 +1204,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     {param.type === "boolean" ? (
                       <select
                         name={param.name}
-                        className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-farm-brown/20 rounded-md focus:outline-none focus:ring-2 focus:ring-farm-green bg-white/90"
                         required={param.required}
                       >
                         <option value="true">True</option>
@@ -1213,7 +1214,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       <input
                         type={param.type === "number" ? "number" : "text"}
                         name={param.name}
-                        className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-farm-brown/20 rounded-md focus:outline-none focus:ring-2 focus:ring-farm-green bg-white/90"
                         required={param.required}
                       />
                     )}
@@ -1224,16 +1225,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div className="mt-4 flex justify-end space-x-2">
                 <button
                   type="button"
-                  className="px-3 py-1 text-sm border border-blue-300 text-blue-700 rounded-md hover:bg-blue-50"
+                  className="px-3 py-1 text-sm border border-farm-brown/20 text-farm-brown rounded-md hover:bg-farm-earth-light/50"
                   onClick={() => setCollectingParameters(null)}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-3 py-1 text-sm bg-farm-green text-white rounded-md hover:bg-farm-green-dark"
                 >
-                  Submit
+                  Plant Information
                 </button>
               </div>
             </form>
@@ -1247,21 +1248,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {isLoading && (
           <div className="flex justify-center items-center p-2">
             <div className="animate-pulse flex space-x-2">
-              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
-              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
-              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+              <div className="h-2 w-2 bg-farm-green rounded-full"></div>
+              <div className="h-2 w-2 bg-farm-green rounded-full"></div>
+              <div className="h-2 w-2 bg-farm-green rounded-full"></div>
             </div>
           </div>
         )}
 
         {/* Error message */}
         {error && (
-          <div className="p-2 text-center text-red-500 text-sm">{error}</div>
+          <div className="p-2 text-center text-farm-orange text-sm">{error}</div>
         )}
       </div>
 
       {/* Input area */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="p-3 border-t border-farm-brown/20 bg-white/80">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -1274,20 +1275,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
-              modelName ? `Message ${modelName}...` : "Select a model first..."
+              modelName ? `Plant a message for ${modelName}...` : "Select a model first..."
             }
             disabled={!modelName || isLoading}
-            className="flex-1 min-h-20 max-h-60 resize-y"
+            className="flex-1 min-h-20 max-h-60 resize-y border-farm-brown/20 focus:ring-farm-green"
             fullWidth
           />
           <Button
             type="submit"
             variant="primary"
-            className="ml-3 self-end"
+            className="ml-3 self-end bg-farm-green hover:bg-farm-green-dark"
             disabled={!input.trim() || !modelName || isLoading}
             isLoading={isLoading}
           >
-            Send
+            Harvest
           </Button>
         </form>
       </div>

@@ -36,12 +36,12 @@ class ModelPullResponse(BaseModel):
 
 # Initialize model manager
 model_manager = OllamaModelManager(
-    base_url=os.getenv("OLLAMA_API_URL", "http://localhost:8000")
+    base_url=os.getenv("OLLAMA_API_URL", "http://localhost:11434")
 )
 
 # Service dependencies
 def get_ollama_service():
-    return OllamaService()
+    return OllamaService(base_url="http://localhost:11434")
 
 # Routes
 @router.get("/ollama/status")
