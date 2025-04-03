@@ -13,4 +13,4 @@ API_PORT = int(os.getenv("API_PORT", "8080"))
 API_RELOAD = os.getenv("API_RELOAD", "True").lower() in ("true", "1", "t")
 
 # CORS settings
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://192.168.0.249:3000").split(",")

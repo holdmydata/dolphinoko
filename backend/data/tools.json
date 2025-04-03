@@ -1,19 +1,5 @@
 [
   {
-    "id": "5de29f16-8e37-4a12-b18f-26d7a9b64c35",
-    "name": "Prompt Enhancer",
-    "description": "Improves existing prompt templates for better results",
-    "provider": "ollama",
-    "model": "dolphin3:latest",
-    "prompt_template": "Enhance the following prompt template to improve clarity, specificity, and effectiveness.\n\nOriginal prompt template:\n{input}\n\nProvide the improved version with clear reasoning for your changes.",
-    "parameters": {
-      "temperature": 0.3,
-      "max_tokens": 1000
-    },
-    "created_at": "2025-03-14T10:05:00Z",
-    "updated_at": "2025-03-17T21:45:26Z"
-  },
-  {
     "id": "6cf31a09-91c6-4b24-b79e-18d5b9a61d84",
     "name": "Category Suggester",
     "description": "Suggests appropriate categories and subcategories for tools",
@@ -261,5 +247,19 @@
     },
     "created_at": "2025-03-14T10:00:00Z",
     "updated_at": "2025-04-02T15:19:05Z"
+  },
+  {
+    "id": "5de29f16-8e37-4a12-b18f-26d7a9b64c35",
+    "name": "Prompt Enhancer",
+    "description": "Improves existing prompt templates for better results",
+    "provider": "ollama",
+    "model": "gemma3:12b",
+    "prompt_template": "Enhance the following prompt template to improve clarity, specificity, and effectiveness.\n\nOriginal prompt template:\n{input}\n\nProvide the improved version with clear reasoning for your changes.",
+    "parameters": {
+      "temperature": 0.3,
+      "max_tokens": 3000
+    },
+    "created_at": "2025-03-14T10:05:00Z",
+    "updated_at": "2025-04-03T01:14:58Z"
   }
 ]

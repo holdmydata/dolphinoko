@@ -1,73 +1,108 @@
 // frontend/src/utils/ensureTools.ts
-import { Tool, ToolContext } from "../context/ToolContext";
-import { v4 as uuidv4 } from "uuid";
+import { Tool } from '../context/ToolContext';
+import { api } from './api';
+import { v4 as uuidv4 } from 'uuid';
 
-// Function to get the default model from settings
-const getDefaultModel = (provider: string): string => {
-  try {
-    const savedSettings = localStorage.getItem("mcp-toolbox-settings");
-    if (savedSettings) {
-      const settings = JSON.parse(savedSettings);
-      if (settings.defaultModel) {
-        return settings.defaultModel;
-      }
-    }
-    // Fallback defaults if settings aren't available
-    return provider === "ollama" ? "dolphin3:latest" : "claude-3-sonnet-20240229";
-  } catch (e) {
-    console.error("Error reading settings:", e);
-    return provider === "ollama" ? "dolphin3:latest" : "claude-3-sonnet-20240229";
-  }
-};
+const MODEL_SETTINGS_KEY = 'dolphinoko-model-settings';
 
-// Function to ensure a chat tool exists for a provider
+/**
+ * Ensure that a chat tool exists for the given provider and model.
+ * If it doesn't exist, create it.
+ */
 export const ensureChatTool = async (
-    toolContext: ToolContext,
-    provider: string,
-    modelName: string
-  ): Promise<Tool | undefined> => {
-    if (!toolContext || toolContext.loading) return undefined;
-  
-    // Check if a chat tool already exists for this provider
-    const existingTool = toolContext.tools.find(
-      (t) => t.name.toLowerCase().includes("chat") && t.provider === provider
-    );
-  
-    if (existingTool) {
-      return existingTool;
-    }
-  
-    // Create a new chat tool
+  toolContext: any,
+  provider: string,
+  model: string
+): Promise<Tool | null> => {
+  // Early return if no context
+  if (!toolContext) {
+    console.warn('ensureChatTool: toolContext is missing');
+    return null;
+  }
+
+  const { tools, createTool } = toolContext;
+
+  // First, check if the requested model is a fallback
+  if (!model || model.trim() === '') {
+    // Try to load the model settings from localStorage
     try {
-      // Use the provided model name or get the default from settings
-      const defaultModel = getDefaultModel(provider);
-      
+      const modelSettings = localStorage.getItem(MODEL_SETTINGS_KEY);
+      if (modelSettings) {
+        const settings = JSON.parse(modelSettings);
+        if (settings.baseModel) {
+          model = settings.baseModel;
+          // If provider is not set or doesn't match model settings provider, update it
+          if (!provider || provider.trim() === '') {
+            provider = settings.baseProvider || 'ollama';
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to parse model settings:', error);
+    }
+    
+    // If still no model, use a default
+    if (!model || model.trim() === '') {
+      model = 'dolphin3:latest';
+      provider = 'ollama';
+      console.warn('No model provided to ensureChatTool, using default:', model);
+    }
+  }
+
+  // Check if a chat tool already exists for this provider/model
+  let chatTool = tools.find(
+    (tool: Tool) => 
+      tool.name.toLowerCase().includes('chat') && 
+      tool.provider === provider &&
+      tool.model === model
+  );
+
+  // If not found, check for any chat tool with this provider
+  if (!chatTool) {
+    chatTool = tools.find(
+      (tool: Tool) => 
+        tool.name.toLowerCase().includes('chat') && 
+        tool.provider === provider
+    );
+  }
+
+  // If a chat tool exists, return it
+  if (chatTool) {
+    return chatTool;
+  }
+
+  // No chat tool exists, so create one
+  if (createTool) {
+    console.log(`Creating new chat tool for ${provider}/${model}`);
+    
+    try {
       const newTool: Tool = {
-        id: uuidv4(), // Generate a unique UUID v4
-        name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Chat`,
+        id: uuidv4(),
+        name: `${provider} Chat`,
         description: `Chat with ${provider} models`,
-        category: "chat",
-        subcategory: provider,
+        category: 'chat',
         provider,
-        model: modelName || defaultModel,
-        prompt_template: "{input}",
-        system_prompt: "", // Add required empty system prompt
-        version: 1, // Add version number
-        schema: {}, // Add empty schema
+        model,
+        prompt_template: '{input}',
+        system_prompt: '', // Required field
+        version: 1, // Required field
         parameters: {
           temperature: 0.7,
-          max_tokens: 2000, // Increased from 1000 to allow longer responses
-          top_p: 0.9,
-          frequency_penalty: 0.0,
-          presence_penalty: 0.0
+          max_tokens: 1000
         },
+        schema: {}, // Required field
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       
-      const createdTool = await toolContext.createTool(newTool);
-      console.log(`Created chat tool for ${provider}`);
-      return createdTool;
+      await createTool(newTool);
+      return newTool;
     } catch (err) {
-      console.error(`Failed to create chat tool for ${provider}:`, err);
-      return undefined;
+      console.error('Failed to create chat tool:', err);
+      return null;
     }
-  };
+  }
+  
+  console.warn('ensureChatTool: createTool function not available');
+  return null;
+};

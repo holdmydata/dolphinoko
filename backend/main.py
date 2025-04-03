@@ -80,7 +80,7 @@ app.include_router(search_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://0.0.0.0:7687", "http://localhost:8080", "http://localhost:8000"],  # Add your frontend URL
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://0.0.0.0:7687", "http://localhost:8080", "http://localhost:8000", "http://192.168.0.249:3000"],  # Add your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

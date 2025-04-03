@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Tool } from "../../context/ToolContext";
 import { motion } from "framer-motion";
+import ModelSelector from "./ModelSelector";
 
 interface ToolEditorProps {
   tool: Tool;
@@ -282,16 +283,25 @@ const ToolEditor: React.FC<ToolEditorProps> = ({
             <label className="block text-sm font-medium text-farm-brown-dark mb-1">
               Model
             </label>
-            <input
-              type="text"
-              name="model"
-              value={editedTool.model}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
-                         focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
-              placeholder="e.g., llama3:latest"
-              required
-            />
+            {editedTool.provider === "ollama" ? (
+              <ModelSelector
+                provider={editedTool.provider}
+                value={editedTool.model}
+                onChange={(model) => setEditedTool(prev => ({ ...prev, model }))}
+                className="border border-farm-brown-light rounded-md focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
+              />
+            ) : (
+              <input
+                type="text"
+                name="model"
+                value={editedTool.model}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                          focus:outline-none focus:ring-2 focus:ring-farm-green bg-white text-farm-brown-dark"
+                placeholder="e.g., llama3:latest"
+                required
+              />
+            )}
           </motion.div>
         </motion.div>
 

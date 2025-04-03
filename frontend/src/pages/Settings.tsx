@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { secureStorage } from "../utils/secureStorage";
+import { useModelSettings } from "../context/ModelSettingsContext";
+import ModelSelector from "../components/tools/ModelSelector";
 
 // Define settings interface
 interface Settings {
   localEndpoints: {
     ollama: string;
+    neo4j: string;
   };
   apiKeys: {
     claude: string;
+  };
+  networkConfig: {
+    host: string;
+    port: number;
+    backendPort: number;
   };
   theme: "light" | "dark" | "system";
   defaultProvider: string;
@@ -18,14 +26,21 @@ interface Settings {
 
 const Settings: React.FC = () => {
   const { theme, setTheme } = useTheme();
+  const { modelSettings, updateModelSettings, resetModelSettings } = useModelSettings();
 
   // Default settings
   const defaultSettings: Settings = {
     localEndpoints: {
       ollama: "http://localhost:11434",
+      neo4j: "bolt://localhost:7687"
     },
     apiKeys: {
       claude: "",
+    },
+    networkConfig: {
+      host: "192.168.0.249",
+      port: 3000,
+      backendPort: 8080
     },
     theme: "light",
     defaultProvider: "ollama",
@@ -129,268 +144,250 @@ const Settings: React.FC = () => {
     }
   };
 
+  // Handle model selector changes
+  const handleModelChange = (model: string) => {
+    updateModelSettings({ baseModel: model });
+    setIsSaved(false);
+  };
+  
+  // Handle provider change
+  const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    updateModelSettings({ baseProvider: e.target.value });
+    setIsSaved(false);
+  };
+
+  // Save base model settings
+  const saveBaseModelSettings = () => {
+    // No need to do anything, model settings are saved automatically
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 3000);
+  };
+
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200">
-          Settings
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Configure your Dolphin MCP Toolbox preferences
-        </p>
-      </div>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold text-farm-brown-dark mb-6">Farm Settings</h1>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        {/* Local Endpoints Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-200 dark:text-white mb-4 pb-2 border-b dark:border-gray-700">
-            Local Model Endpoints
-          </h2>
+      <div className="farm-panel mb-8">
+        <div className="farm-panel-title">
+          <h2 className="text-xl font-bold">Base Model Settings</h2>
+        </div>
+        <div className="farm-panel-content">
+          <p className="text-farm-brown-dark mb-4">
+            These settings control the default model used by all assistants and tools.
+          </p>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Ollama API Endpoint
-              </label>
-              <input
-                type="text"
-                name="localEndpoints.ollama"
-                value={settings.localEndpoints.ollama}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="http://localhost:11434"
-              />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                The URL of your local Ollama server
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Default Model
+              <label className="block text-sm font-medium text-farm-brown-dark mb-2">
+                Default Provider
               </label>
               <select
-                name="defaultModel"
-                value={settings.defaultModel}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                name="baseProvider"
+                value={modelSettings.baseProvider}
+                onChange={handleProviderChange}
+                className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                       focus:outline-none focus:ring-2 focus:ring-farm-green bg-white
+                       text-farm-brown-dark"
               >
-                <option value="dolphin3:latest">dolphin3 (recommended)</option>
-                <option value="llama3:latest">llama3</option>
-                <option value="mistral:latest">mistral</option>
-                <option value="mixtral:latest">mixtral</option>
-                <option value="phi3:latest">phi3</option>
-                <option value="llama2:latest">llama2 (legacy)</option>
+                <option value="ollama">Ollama (Local)</option>
+                <option value="claude">Claude (Anthropic)</option>
               </select>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Default model to use for chat and characters
-              </p>
             </div>
-          </div>
-        </section>
 
-        {/* API Keys Section */}
-        <section className="mb-8">
-          <h2 className="text-xl  text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
-            External API Keys
-          </h2>
-
-          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Claude API Key (Optional)
+              <label className="block text-sm font-medium text-farm-brown-dark mb-2">
+                Default Model
               </label>
-              <input
-                type="password"
-                name="apiKeys.claude"
-                value={settings.apiKeys.claude}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="sk-ant-api..."
-              />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Required only if you want to use Claude models
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Appearance Section */}
-        <section className="mb-8">
-          <h2 className="text-xl  text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
-            Appearance
-          </h2>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Theme
-            </label>
-            <select
-              name="theme"
-              value={settings.theme}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="system">System Default</option>
-            </select>
-          </div>
-        </section>
-
-        {/* Defaults Section */}
-        <section className="mb-8">
-          <h2 className="text-xl  text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
-            Defaults
-          </h2>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Default Provider
-            </label>
-            <select
-              name="defaultProvider"
-              value={settings.defaultProvider}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="ollama">Ollama (Local)</option>
-              <option value="claude">Claude (Anthropic)</option>
-            </select>
-          </div>
-        </section>
-        <section className="mb-8">
-          <h2 className="text-xl text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
-            Database Options
-          </h2>
-
-          <div className="flex items-center mb-4">
-            <input
-              type="checkbox"
-              id="enableNeo4j"
-              name="enableNeo4j"
-              checked={settings.enableNeo4j}
-              onChange={(e) =>
-                handleChange({
-                  target: {
-                    name: "enableNeo4j",
-                    value: e.target.checked,
-                  },
-                })
-              }
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="enableNeo4j"
-              className="ml-2 block text-gray-700 dark:text-gray-300"
-            >
-              Enable Neo4j Graph Database (Optional)
-            </label>
-          </div>
-
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Neo4j provides advanced graph capabilities, but requires separate
-            installation. SQLite is used by default.
-          </p>
-        </section>
-
-        {/* Model Documentation Section */}
-        <section className="mb-8">
-          <h2 className="text-xl text-gray-200 dark:text-white font-semibold mb-4 pb-2 border-b dark:border-gray-700">
-            Model Documentation
-          </h2>
-          
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Recommended Ollama Models
-              </h3>
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
-                <ul className="list-disc pl-5 space-y-2 text-gray-600 dark:text-gray-300">
-                  <li><strong>dolphin3:latest</strong> - Recommended for chat and most tasks, provides well-formatted and helpful responses</li>
-                  <li><strong>mistral:latest</strong> - Good general purpose model</li>
-                  <li><strong>llama3:latest</strong> - Meta's newest model, good for variety of tasks</li>
-                  <li><strong>mixtral:latest</strong> - Stronger reasoning capabilities</li>
-                  <li><strong>phi3:latest</strong> - Microsoft's compact but capable model</li>
-                </ul>
-                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                  Command to pull models: <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">ollama pull model_name</code>
-                </p>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Troubleshooting Chat Responses
-              </h3>
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
-                <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-1">If responses are too short:</h4>
-                <ul className="list-disc pl-5 space-y-1 text-gray-600 dark:text-gray-300 mb-3">
-                  <li>Try increasing the <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">max_tokens</code> parameter (default is now 2000)</li>
-                  <li>Try a different model (dolphin3 is generally recommended)</li>
-                  <li>Make sure Ollama is running with sufficient resources</li>
-                </ul>
-                
-                <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-1">If responses lack creativity:</h4>
-                <ul className="list-disc pl-5 space-y-1 text-gray-600 dark:text-gray-300">
-                  <li>Try increasing <code className="bg-gray-200 dark:bg-gray-600 px-1 rounded">temperature</code> to 0.8-1.0</li>
-                  <li>Add more context in your prompts</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Character Integration
-              </h3>
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md text-gray-600 dark:text-gray-300">
-                <p className="mb-2">
-                  Characters use the same model as your chat. For best results with character interactions:
-                </p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Create a chat tool with your preferred model</li>
-                  <li>Select that same model when interacting with characters</li>
-                  <li>Character personalities work best with more capable models (dolphin3, mixtral)</li>
-                </ul>
+              <div className="border border-farm-brown-light rounded-md">
+                <ModelSelector
+                  provider={modelSettings.baseProvider}
+                  value={modelSettings.baseModel}
+                  onChange={handleModelChange}
+                  className="bg-white"
+                />
               </div>
             </div>
           </div>
-        </section>
 
-        {/* Actions */}
-        <div className="flex justify-between items-center">
-          <button
-            onClick={resetSettings}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Reset to Defaults
-          </button>
+          <div className="flex justify-end space-x-4 pt-4 border-t border-farm-brown-light">
+            <button
+              onClick={resetModelSettings}
+              className="farm-button"
+            >
+              Reset Model Settings
+            </button>
+            <button
+              onClick={saveBaseModelSettings}
+              className="farm-button bg-farm-green text-white hover:bg-farm-green-dark"
+            >
+              <span className="mr-2">{isSaved ? "✅" : "💾"}</span>
+              {isSaved ? "Saved!" : "Save Model Settings"}
+            </button>
+          </div>
+        </div>
+      </div>
 
-          <div className="flex items-center space-x-4">
-            {isSaved && (
-              <span className="text-green-600 dark:text-green-400 flex items-center">
-                <svg
-                  className="h-5 w-5 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
+      <div className="farm-panel">
+        <div className="farm-panel-title">
+          <h2 className="text-xl font-bold">System Settings</h2>
+        </div>
+        <div className="farm-panel-content">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h3 className="text-lg font-medium text-farm-brown-dark mb-2">
+                Local Endpoints
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-farm-brown-dark mb-1">
+                    Ollama API URL
+                  </label>
+                  <input
+                    type="text"
+                    name="localEndpoints.ollama"
+                    value={settings.localEndpoints.ollama}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                            focus:outline-none focus:ring-2 focus:ring-farm-green bg-white
+                            text-farm-brown-dark"
+                    placeholder="http://localhost:11434"
                   />
-                </svg>
-                Settings saved!
-              </span>
-            )}
+                </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-farm-brown-dark mb-1">
+                    Neo4j Connection String
+                  </label>
+                  <input
+                    type="text"
+                    name="localEndpoints.neo4j"
+                    value={settings.localEndpoints.neo4j}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                            focus:outline-none focus:ring-2 focus:ring-farm-green bg-white
+                            text-farm-brown-dark"
+                    placeholder="bolt://localhost:7687"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-farm-brown-dark mb-2">
+                API Keys
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-farm-brown-dark mb-1">
+                    Claude API Key
+                  </label>
+                  <input
+                    type="password"
+                    name="apiKeys.claude"
+                    value={settings.apiKeys.claude}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                            focus:outline-none focus:ring-2 focus:ring-farm-green bg-white
+                            text-farm-brown-dark"
+                    placeholder="sk-..."
+                  />
+                  <p className="mt-1 text-sm text-farm-brown">
+                    Your API key is stored securely and never shared.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-lg font-medium text-farm-brown-dark mb-2">
+              Network Configuration
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-farm-brown-dark mb-1">
+                  Host IP Address
+                </label>
+                <input
+                  type="text"
+                  name="networkConfig.host"
+                  value={settings.networkConfig.host}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                          focus:outline-none focus:ring-2 focus:ring-farm-green bg-white
+                          text-farm-brown-dark"
+                  placeholder="192.168.0.1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-farm-brown-dark mb-1">
+                  Frontend Port
+                </label>
+                <input
+                  type="number"
+                  name="networkConfig.port"
+                  value={settings.networkConfig.port}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                          focus:outline-none focus:ring-2 focus:ring-farm-green bg-white
+                          text-farm-brown-dark"
+                  placeholder="3000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-farm-brown-dark mb-1">
+                  Backend Port
+                </label>
+                <input
+                  type="number"
+                  name="networkConfig.backendPort"
+                  value={settings.networkConfig.backendPort}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                          focus:outline-none focus:ring-2 focus:ring-farm-green bg-white
+                          text-farm-brown-dark"
+                  placeholder="8080"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-lg font-medium text-farm-brown-dark mb-2">
+              Appearance
+            </h3>
+            <div>
+              <label className="block text-sm font-medium text-farm-brown-dark mb-1">
+                Theme
+              </label>
+              <select
+                name="theme"
+                value={settings.theme}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-farm-brown-light rounded-md 
+                        focus:outline-none focus:ring-2 focus:ring-farm-green bg-white
+                        text-farm-brown-dark"
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="system">System</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-4 pt-4 border-t border-farm-brown-light">
+            <button
+              onClick={resetSettings}
+              className="farm-button"
+            >
+              Reset to Defaults
+            </button>
             <button
               onClick={saveSettings}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="farm-button bg-farm-green text-white hover:bg-farm-green-dark"
             >
-              Save Settings
+              <span className="mr-2">{isSaved ? "✅" : "💾"}</span>
+              {isSaved ? "Saved!" : "Save Settings"}
             </button>
           </div>
         </div>
