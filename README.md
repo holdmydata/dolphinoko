@@ -2,9 +2,6 @@
 
 Dolphinoko is a delightful farm-themed user interface for building and using LLM-powered agents via the Dolphin Model Context Protocol (MCP). Create and deploy character-based AI helpers with different specialties, organize them visually, and enjoy interacting with them through an accessible, warm interface. The tooling is built on local models with Ollama, with optional cloud model integration.
 
-![Dolphinoko Farm](./frontend/public/assets/dolphinoko_farm.jpg)
-*(Note: You'll need to add a new screenshot that shows the current farm interface)*
-
 ## 🚀 Features
 
 - 🐱 Character-based AI agents with different specialties and personalities
