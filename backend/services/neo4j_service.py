@@ -1,9 +1,9 @@
-# backend/services/neo4j_service.py
+# services/neo4j_service.py
 import os
 import logging
 from neo4j import GraphDatabase
 import json
-from .storage_interface import StorageInterface
+from services.storage_interface import StorageInterface
 
 logger = logging.getLogger(__name__)
 

@@ -2,92 +2,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTools } from '../hooks/useTools';
 import { useCharacter } from '../context/CharacterContext';
-import IslandView from '../components/island/IslandView';
-import WebSearchTool from '../components/tools/WebSearchTool';
-import '../styles/pixelCharacters.css';
 import ChatBox from '../components/chat/ChatBox';
 import MainLayout from '../components/layout/MainLayout';
 import { motion } from 'framer-motion';
 import { useModelSettings } from '../context/ModelSettingsContext';
 import { api } from '../utils/api';
+import BlenderTool from '../components/tools/BlenderTool';
 
-// Character sprite styles - pixel art inspired
-const characterSprites = [
-  // Cat sprite
-  { 
-    emoji: '🐱',
-    color: '#FF7777', 
-    shadowColor: '#DD5555',
-    style: 'cat-sprite'
-  },
-  // Dog sprite
-  { 
-    emoji: '🐶',
-    color: '#77AAFF', 
-    shadowColor: '#5577DD',
-    style: 'dog-sprite'
-  },
-  // Bird sprite
-  { 
-    emoji: '🐦',
-    color: '#FFAA77', 
-    shadowColor: '#DD8855',
-    style: 'bird-sprite'
-  },
-  // Rabbit sprite
-  { 
-    emoji: '🐰',
-    color: '#BB77FF', 
-    shadowColor: '#9955DD',
-    style: 'rabbit-sprite'
-  },
-  // Fox sprite
-  { 
-    emoji: '🦊',
-    color: '#FF9944', 
-    shadowColor: '#DD7722',
-    style: 'fox-sprite'
-  },
-  // Bear sprite
-  { 
-    emoji: '🐻',
-    color: '#AA8866', 
-    shadowColor: '#886644',
-    style: 'bear-sprite'
-  },
-  // Panda sprite
-  { 
-    emoji: '🐼',
-    color: '#EEEEEE', 
-    shadowColor: '#AAAAAA',
-    style: 'panda-sprite'
-  },
-  // Koala sprite
-  { 
-    emoji: '🐨',
-    color: '#AABBCC', 
-    shadowColor: '#8899AA',
-    style: 'koala-sprite'
-  }
-];
-
-// Tool icons with a more modern style
-const toolIcons = ['🌐', '💻', '📊', '✏️', '🔍', '📱', '🤖', '🎨'];
-
-// Function to generate a deterministic color from a string
-const stringToColor = (str: string): string => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  
-  let color = '#';
-  for (let i = 0; i < 3; i++) {
-    const value = (hash >> (i * 8)) & 0xFF;
-    color += ('00' + value.toString(16)).substr(-2);
-  }
-  
-  return color;
+// Tool category icons with a more professional style
+const toolCategoryIcons: Record<string, string> = {
+  assistant: '🧠',
+  web: '🌐',
+  document: '📄',
+  communication: '💬',
+  creative: '🎨',
+  security: '🔒',
+  blender: '📐', // New icon for Blender tool
+  default: '🛠️'
 };
 
 const IslandHome: React.FC = () => {
@@ -95,67 +26,12 @@ const IslandHome: React.FC = () => {
   const { characters, selectedCharacter, setSelectedCharacter, updateCharacter } = useCharacter();
   const { modelSettings } = useModelSettings();
   const navigate = useNavigate();
-  const [characterPositions, setCharacterPositions] = useState<any[]>([]);
   const [selectedTool, setSelectedTool] = useState<any>(null);
-  const [showSearchTool, setShowSearchTool] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>('');
   const chatBoxRef = useRef<{ addCharacterMessage: (message: string) => void; setTyping: (typing: boolean) => void; } | null>(null);
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-  
-  // Place characters (tools) around the island
-  useEffect(() => {
-    if (tools.length > 0) {
-      // Create character positions based on tools
-      const positions = tools.slice(0, 8).map((tool, index) => {
-        // Place characters in key island locations
-        let position;
-        switch (index % 8) {
-          case 0: // Center left
-            position = { x: 25, y: 30 };
-            break;
-          case 1: // Center
-            position = { x: 45, y: 35 };
-            break;
-          case 2: // Top right
-            position = { x: 70, y: 25 };
-            break;
-          case 3: // Bottom center
-            position = { x: 50, y: 55 };
-            break;
-          case 4: // Top center
-            position = { x: 30, y: 20 };
-            break;
-          case 5: // Right side
-            position = { x: 75, y: 40 };
-            break;
-          case 6: // Center
-            position = { x: 55, y: 30 };
-            break;
-          case 7: // Bottom left
-          default:
-            position = { x: 20, y: 45 };
-            break;
-        }
-        
-        // Determine animal type based on tool name or ID
-        const animalType = tool.id 
-          ? (tool.id.charCodeAt(0) + tool.id.charCodeAt(tool.id.length - 1)) % 8
-          : index % 8;
-        
-        return {
-          position,
-          color: stringToColor(tool.name || tool.id || `tool-${index}`),
-          toolId: tool.id || `generated-id-${index}`,
-          tool: tool,
-          name: tool.name || `Tool ${index + 1}`,
-          animalType
-        };
-      });
-      
-      setCharacterPositions(positions);
-    }
-  }, [tools]);
+  const [showBlenderTool, setShowBlenderTool] = useState(false);
   
   // Set a default character if none is selected
   useEffect(() => {
@@ -164,31 +40,28 @@ const IslandHome: React.FC = () => {
     }
   }, [selectedCharacter, characters, setSelectedCharacter]);
 
-  const handleCharacterClick = (toolId: string) => {
+  const handleToolSelect = (toolId: string) => {
     const tool = tools.find(t => t.id === toolId);
     if (tool) {
       setSelectedTool(tool);
       
-      // Show web search tool for the Shopkeeper character (animalType 1)
-      const character = characterPositions.find(c => c.toolId === toolId);
-      if (character && character.animalType === 1) {
-        setShowSearchTool(true);
-      } else {
-        setShowSearchTool(false);
+      // Special case for blender tool
+      if (toolId === 'blender-connect') {
+        setShowBlenderTool(true);
+        return;
       }
-    }
-  };
-  
-  const handleCharacterSelect = (characterId: string) => {
-    const character = characters.find(c => c.id === characterId);
-    if (character) {
-      setSelectedCharacter(character);
-      // Generate new random expression
-      updateCharacterExpression(characterId);
+      
+      // Find the related character based on tool category
+      const relatedCharacter = characters.find(c => c.toolCategory === tool.category);
+      if (relatedCharacter) {
+        setSelectedCharacter(relatedCharacter);
+        updateCharacterExpression(relatedCharacter.id);
+      }
+      
       setIsChatOpen(true);
     }
   };
-
+  
   // Helper function to update character expression
   const updateCharacterExpression = (characterId: string) => {
     const expressions = ['(◕‿◕)', '(✿◠‿◠)', '(◕ᴗ◕✿)', '(。◕‿◕。)', '(„ᵕᴗᵕ„)', '(≧◡≦)'];
@@ -336,7 +209,12 @@ Your responses should be colorful, contain creative metaphors, and show exciteme
       'kuma': `You are Kuma-san, a protective bear who manages security and privacy.
 Your personality is cautious, strong, and reliable. You take protection very seriously.
 You provide security advice, help with privacy concerns, and guard against digital threats.
-Your responses should emphasize safety, protection, and careful consideration of risks.`
+Your responses should emphasize safety, protection, and careful consideration of risks.`,
+
+      'blender': `You are Blender-san, a 3D modeling specialist who helps with Blender operations.
+Your personality is technical, precise, and helpful. You are knowledgeable about 3D modeling concepts.
+You provide assistance with Blender commands, 3D modeling techniques, and scene setup.
+Your responses should be clear, accurate, and focused on helping the user achieve their 3D modeling goals.`
     };
     
     return personas[character.id] || 
@@ -344,7 +222,7 @@ Your responses should emphasize safety, protection, and careful consideration of
       Respond in a friendly, helpful manner that matches your character type.`;
   };
   
-  // Fallback response generator (uses our previous function) when API fails
+  // Fallback response generator when API fails
   const generateFallbackResponse = (character: any, userMessage: string) => {
     const messageLower = userMessage.toLowerCase();
     const firstWords = userMessage.split(' ').slice(0, 3).join(' ');
@@ -357,58 +235,18 @@ Your responses should emphasize safety, protection, and careful consideration of
     switch (character.id) {
       case 'neko': // Assistant
         if (containsKeyword(['help', 'how do i', 'can you', 'what is'])) {
-          return `Of course I can help with that! For "${firstWords}...", here's what you should do: first, check if you have the right tools selected. I'm here to assist with daily tasks! What specifically would you like to know? Nya~`;
-        } else if (containsKeyword(['thank', 'thanks', 'appreciate'])) {
-          return `You're very welcome! I'm always happy to help. Is there anything else you need assistance with today? Purr~`;
+          return `Of course I can help with that! For "${firstWords}...", here's what you should do: first, check if you have the right tools selected. I'm here to assist with daily tasks! What specifically would you like to know?`;
         } else {
-          return `I'd be happy to assist you with that! As your friendly assistant, I can help organize your tasks, provide information, or just chat. What would you like to focus on first? Nya~`;
+          return `I'd be happy to assist you with that! As your assistant, I can help organize your tasks, provide information, or just chat. What would you like to focus on first?`;
         }
       
-      case 'tanuki': // Shopkeeper/Web Search
-        if (containsKeyword(['find', 'search', 'look for', 'where'])) {
-          return `I'll search the web for information about "${firstWords}..."! Give me just a moment to gather the most relevant results. My merchant networks have connections everywhere!`;
-        } else if (containsKeyword(['buy', 'purchase', 'store', 'shop'])) {
-          return `Ah! Looking to make a purchase? While I can't directly sell items, I can certainly help you find the best places to buy "${firstWords}..." online. Let me know if you need recommendations!`;
+      case 'blender': // Blender specialist
+        if (containsKeyword(['model', '3d', 'render', 'blender'])) {
+          return `I can help you with your "${firstWords}..." task in Blender. Would you like me to explain the technique or send commands to Blender directly?`;
         } else {
-          return `Welcome to my shop of knowledge! I specialize in finding information from across the web. What treasures of knowledge are you seeking today?`;
+          return `As your 3D modeling specialist, I can help with Blender operations, modeling techniques, and scene setup. What aspect of 3D are you working on today?`;
         }
       
-      case 'kitsune': // Scholar/Document Analysis
-        if (containsKeyword(['analyze', 'document', 'read', 'summary'])) {
-          return `I'd be delighted to analyze that document for you. My scholarly expertise allows me to extract the key insights from any text. Would you like a detailed analysis or just the main points?`;
-        } else if (containsKeyword(['meaning', 'explain', 'understand'])) {
-          return `The question about "${firstWords}..." is quite intriguing. From my scholarly perspective, I can offer several interpretations. Would you like me to explain in more detail?`;
-        } else {
-          return `Greetings, knowledge-seeker. As a scholarly fox, I specialize in deep analysis and understanding of documents and concepts. What wisdom are you pursuing today?`;
-        }
-      
-      case 'tori': // Messenger/Communication
-        if (containsKeyword(['message', 'send', 'email', 'communicate'])) {
-          return `I'll happily help you draft and send that message! As the messenger bird, I can ensure your communications are clear and reach their destination. Would you like to review before sending?`;
-        } else if (containsKeyword(['connect', 'contact', 'reach'])) {
-          return `Looking to connect with someone about "${firstWords}..."? I can help establish that communication channel. Just let me know who you'd like to reach and the message!`;
-        } else {
-          return `Swift greetings! As your messenger bird, I'm here to help with all your communication needs. Need to send a message, draft an email, or connect with someone?`;
-        }
-      
-      case 'usagi': // Creator/Content Creation
-        if (containsKeyword(['create', 'make', 'design', 'draw'])) {
-          return `I'd love to help you create something related to "${firstWords}..."! My creative energy is flowing today. What kind of content are you envisioning? I can assist with ideas, drafting, or design concepts.`;
-        } else if (containsKeyword(['inspiration', 'idea', 'creative'])) {
-          return `Looking for creative inspiration? I have plenty to share! For "${firstWords}...", have you considered approaching it from multiple perspectives? Sometimes the best ideas come from unexpected angles.`;
-        } else {
-          return `Greetings, fellow creator! My creative energy is at your service. Whether you need help with content creation, design ideas, or just a spark of inspiration, I'm here to help your vision come to life!`;
-        }
-      
-      case 'kuma': // Guardian/Security
-        if (containsKeyword(['protect', 'secure', 'privacy', 'safe'])) {
-          return `I take your security concerns about "${firstWords}..." very seriously. As your guardian, I recommend implementing strong authentication and regular security reviews. Would you like more specific security advice?`;
-        } else if (containsKeyword(['threat', 'risk', 'danger', 'hack'])) {
-          return `I've analyzed the potential risks regarding "${firstWords}..." and can provide protective measures. Remember, preparation is key to security. Let me know which aspects you'd like me to focus on.`;
-        } else {
-          return `Standing guard! As your security and privacy guardian, I'm here to protect your digital world. Do you have specific concerns, or would you like a general security assessment?`;
-        }
-        
       default:
         // Generic response for any other character
         return `I find what you said about "${firstWords}..." quite interesting! As a ${character.role}, I'm happy to continue our conversation and learn more about your thoughts on this.`;
@@ -419,49 +257,108 @@ Your responses should emphasize safety, protection, and careful consideration of
     setIsChatOpen(false);
   };
   
-  const navigateTo = (path: string) => {
-    navigate(path);
-  };
+  // Group tools by category
+  const toolsByCategory: Record<string, any[]> = {};
+  tools.forEach(tool => {
+    const category = tool.category || 'default';
+    if (!toolsByCategory[category]) {
+      toolsByCategory[category] = [];
+    }
+    toolsByCategory[category].push(tool);
+  });
   
   return (
     <MainLayout>
       <div className="flex flex-col h-full w-full">
-        {/* Main content with island view and chat */}
+        {/* Main content with tool dashboard and chat */}
         <div className="flex-grow flex flex-col md:flex-row relative overflow-hidden">
-          {/* Island View */}
+          {/* Tool Dashboard */}
           <motion.div 
-            className="flex-grow relative"
+            className="flex-grow p-6 bg-gray-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.5 }}
           >
-            <IslandView 
-              onCharacterSelect={handleCharacterSelect}
-              selectedCharacterId={selectedCharacter?.id}
-            />
+            <h2 className="text-2xl font-semibold mb-6 text-gray-800">Tool Shed</h2>
             
-            {/* Chat toggle button with anime styling */}
-            <motion.button
-              className="absolute bottom-4 right-4 z-10 p-3 rounded-full shadow-lg 
-                bg-gradient-to-r from-kawaii-purple-400 to-kawaii-pink-400 
-                text-white font-bold"
-              onClick={handleChatToggle}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              {isChatOpen ? '✕' : '💬'}
-            </motion.button>
-            
-            {/* Last message bubble */}
-            {!isChatOpen && lastMessage && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Render tool categories */}
+              {Object.entries(toolsByCategory).map(([category, categoryTools]) => (
+                <div key={category} className="bg-white rounded-lg shadow-md overflow-hidden">
+                  <div className="bg-blue-50 px-4 py-3 border-b border-blue-100 flex items-center">
+                    <span className="text-2xl mr-2">
+                      {toolCategoryIcons[category] || toolCategoryIcons.default}
+                    </span>
+                    <h3 className="text-lg font-medium text-gray-800 capitalize">
+                      {category === 'default' ? 'Miscellaneous' : category}
+                    </h3>
+                  </div>
+                  
+                  <div className="p-4">
+                    <div className="space-y-3">
+                      {categoryTools.map(tool => (
+                        <motion.button
+                          key={tool.id}
+                          className="w-full text-left px-4 py-3 rounded-md border border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-colors flex items-center"
+                          onClick={() => handleToolSelect(tool.id)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-800">{tool.name}</h4>
+                            <p className="text-sm text-gray-600 line-clamp-2">{tool.description}</p>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Add Blender integration card */}
               <motion.div 
-                className="absolute bottom-16 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-md max-w-xs text-sm"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
+                className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg shadow-md overflow-hidden border border-blue-100"
+                whileHover={{ scale: 1.02 }}
               >
-                <p className="text-gray-700">{lastMessage}</p>
-                <div className="absolute bottom-0 right-4 w-4 h-4 bg-white transform rotate-45 translate-y-2"></div>
+                <div className="bg-gradient-to-r from-blue-100 to-purple-100 px-4 py-3 border-b border-blue-200 flex items-center">
+                  <span className="text-2xl mr-2">📐</span>
+                  <h3 className="text-lg font-medium text-gray-800">Blender Integration</h3>
+                </div>
+                
+                <div className="p-4">
+                  <p className="text-gray-700 mb-4">Connect to Blender for 3D modeling assistance and automation</p>
+                  <motion.button
+                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                    onClick={() => handleToolSelect('blender-connect')}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Connect to Blender
+                  </motion.button>
+                </div>
+              </motion.div>
+            </div>
+            
+            {/* Show Blender Tool when requested */}
+            {showBlenderTool && (
+              <motion.div
+                className="fixed inset-0 bg-black bg-opacity-30 z-40 flex items-center justify-center p-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowBlenderTool(false)}
+              >
+                <motion.div 
+                  className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto"
+                  initial={{ scale: 0.9, y: 20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.9, y: 20 }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <BlenderTool
+                    className="p-6"
+                    onClose={() => setShowBlenderTool(false)}
+                  />
+                </motion.div>
               </motion.div>
             )}
           </motion.div>
@@ -469,24 +366,24 @@ Your responses should emphasize safety, protection, and careful consideration of
           {/* Chat box */}
           {isChatOpen && selectedCharacter && (
             <motion.div 
-              className="md:w-1/3 lg:w-1/4 bg-white/90 backdrop-blur-sm shadow-lg border border-kawaii-purple-100 rounded-lg overflow-hidden flex flex-col"
+              className="md:w-1/3 lg:w-1/4 bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden flex flex-col"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 20 }}
             >
               {/* Character info header */}
-              <div className="bg-gradient-to-r from-kawaii-purple-100 to-kawaii-pink-100 p-4 flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-kawaii-pink-300 to-kawaii-purple-400 flex items-center justify-center text-2xl shadow-inner">
-                  {getAnimalEmoji(selectedCharacter.type)}
+              <div className="bg-blue-50 p-4 flex items-center space-x-3 border-b border-gray-200">
+                <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center text-2xl shadow-sm">
+                  {toolCategoryIcons[selectedCharacter.toolCategory || 'default']}
                 </div>
                 <div>
-                  <h3 className="font-bold text-kawaii-purple-800">{selectedCharacter.name}</h3>
-                  <p className="text-xs text-kawaii-purple-600">{selectedCharacter.role}</p>
+                  <h3 className="font-bold text-gray-800">{selectedCharacter.name}</h3>
+                  <p className="text-xs text-gray-600">{selectedCharacter.role}</p>
                 </div>
                 <button 
                   onClick={handleChatClose}
-                  className="ml-auto bg-kawaii-pink-100 hover:bg-kawaii-pink-200 rounded-full p-1"
+                  className="ml-auto bg-white hover:bg-gray-100 rounded-full p-1.5 text-gray-500"
                 >
                   ✕
                 </button>
@@ -496,27 +393,28 @@ Your responses should emphasize safety, protection, and careful consideration of
                 ref={chatBoxRef}
                 characterName={selectedCharacter.name}
                 onSubmit={handleChatSubmit}
-                characterExpression={selectedCharacter.expression || '(◕‿◕)'}
+                characterExpression={selectedCharacter.expression || ''}
               />
             </motion.div>
+          )}
+          
+          {/* Chat toggle button */}
+          {selectedCharacter && !isChatOpen && (
+            <motion.button
+              className="absolute bottom-4 right-4 z-10 p-3 rounded-full shadow-lg 
+                bg-blue-500 hover:bg-blue-600
+                text-white font-bold"
+              onClick={handleChatToggle}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              💬
+            </motion.button>
           )}
         </div>
       </div>
     </MainLayout>
   );
-};
-
-// Helper function to get emoji based on animal type
-const getAnimalEmoji = (type: string): string => {
-  switch (type) {
-    case 'cat': return '🐱';
-    case 'dog': return '🐶';
-    case 'bird': return '🐦';
-    case 'rabbit': return '🐰';
-    case 'fox': return '🦊';
-    case 'bear': return '🐻';
-    default: return '🐾';
-  }
 };
 
 export default IslandHome; 

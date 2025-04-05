@@ -5,8 +5,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { CharacterProvider } from "./context/CharacterContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { ModelSettingsProvider } from "./context/ModelSettingsContext";
-import Sidebar from "./components/layout/Sidebar";
-import Workspace from "./components/layout/Workspace";
+import ElectronAppLayout from "./components/layout/ElectronAppLayout";
 import Dashboard from "./pages/Dashboard";
 import ToolBuilder from "./pages/ToolBuilder";
 import Settings from "./pages/Settings";
@@ -17,12 +16,24 @@ import IslandHome from "./pages/IslandHome";
 import CharacterCreator from "./pages/CharacterCreator";
 import ToolShed from "./pages/ToolShed";
 import ModelSetupModal from "./components/modals/ModelSetupModal";
+import DashboardOption1 from './pages/DashboardOption1';
+import DashboardOption2 from './pages/DashboardOption2';
+import DashboardOption3 from './pages/DashboardOption3';
+import IndexPage from './pages/index';
+import DashboardWorkflow from './pages/DashboardWorkflow';
 
 // Application styles
 import "./App.css";
 import ToolMonitoring from "./pages/ToolMonitoring";
 import { ConversationProvider } from "./context/ConversationContext";
 import { useModelSettings } from "./context/ModelSettingsContext";
+
+// Detect if running in Electron
+const isElectronApp = () => {
+  // In a real app, use: return window && window.process && window.process.type;
+  // For this demo, check for a URL parameter or localStorage setting
+  return window.location.search.includes('electron=true') || localStorage.getItem('useElectronUI') === 'true';
+};
 
 // Wrap application with model setup check
 const AppWithModelSetup: React.FC = () => {
@@ -43,16 +54,17 @@ const AppWithModelSetup: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);  // Default closed on mobile
+  const [isElectron, setIsElectron] = useState(isElectronApp());
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  // Function to close sidebar when clicking overlay
-  const closeSidebar = () => {
-    setSidebarOpen(false);
-  };
+  // Enable toggling Electron mode via localStorage for testing
+  useEffect(() => {
+    const checkElectronMode = () => {
+      setIsElectron(isElectronApp());
+    };
+    
+    window.addEventListener('storage', checkElectronMode);
+    return () => window.removeEventListener('storage', checkElectronMode);
+  }, []);
 
   return (
     <ThemeProvider>
@@ -62,52 +74,27 @@ const App: React.FC = () => {
             <ToolProvider>
               <CharacterProvider>
                 <Router>
-                  <div className="h-screen overflow-hidden bg-farm-wood-light text-farm-brown">
-                    {/* Mobile Overlay - only visible on mobile when sidebar is open */}
-                    {sidebarOpen && (
-                      <div 
-                        className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-20"
-                        onClick={closeSidebar}
-                      />
-                    )}
-                    
-                    {/* Sidebar */}
-                    <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-
-                    {/* Mobile Menu Button - visible only on mobile */}
-                    <button
-                      className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-full bg-farm-brown-light shadow-md hover:bg-farm-brown border border-farm-brown-dark"
-                      onClick={toggleSidebar}
-                    >
-                      <svg className="w-6 h-6 text-farm-brown-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        {sidebarOpen ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        ) : (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        )}
-                      </svg>
-                    </button>
-
-                    {/* Main Content Container */}
-                    <div className={`transition-all duration-300 h-full 
-                      ${sidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
-                      <Workspace>
-                        <Routes>
-                          <Route path="/" element={<IslandHome />} />
-                          <Route path="/dashboard" element={<Dashboard />} />
-                          <Route path="/tools" element={<ToolShed />} />
-                          <Route path="/tools/new" element={<ToolBuilder />} />
-                          <Route path="/tools/edit/:id" element={<ToolBuilder />} />
-                          <Route path="/tools/improve/:id" element={<ToolImproverPage />} />
-                          <Route path="/tools/organize" element={<ToolOrganizerPage />} />
-                          <Route path="/chat" element={<Chat />} />
-                          <Route path="/monitoring" element={<ToolMonitoring />} />
-                          <Route path="/settings" element={<Settings />} />
-                          <Route path="/character-creator" element={<CharacterCreator />} />
-                        </Routes>
-                      </Workspace>
-                    </div>
-                  </div>
+                  <Routes>
+                    <Route element={<ElectronAppLayout isElectron={isElectron} />}>
+                      <Route path="/" element={<IndexPage />} />
+                      <Route path="/tools" element={<ToolShed />} />
+                      <Route path="/tools/:id" element={<ToolShed />} />
+                      <Route path="/island-home" element={<IslandHome />} />
+                      <Route path="/DashboardOption1" element={<DashboardOption1 />} />
+                      <Route path="/DashboardOption2" element={<DashboardOption2 />} />
+                      <Route path="/DashboardOption3" element={<DashboardOption3 />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/tools/new" element={<ToolBuilder />} />
+                      <Route path="/tools/edit/:id" element={<ToolBuilder />} />
+                      <Route path="/tools/improve/:id" element={<ToolImproverPage />} />
+                      <Route path="/tools/organize" element={<ToolOrganizerPage />} />
+                      <Route path="/chat" element={<Chat />} />
+                      <Route path="/monitoring" element={<ToolMonitoring />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/character-creator" element={<CharacterCreator />} />
+                      <Route path="/workflow" element={<DashboardWorkflow />} />
+                    </Route>
+                  </Routes>
                 </Router>
               </CharacterProvider>
             </ToolProvider>

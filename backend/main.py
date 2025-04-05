@@ -1,12 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import uuid
 import time
 import logging
 import os
+import json
+import asyncio
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse, HTMLResponse, StreamingResponse, JSONResponse
 from services.storage_service import load_tools as load_tools_json, save_tools as save_tools_json
 from services.sqlite_storage import SQLiteStorage
 from routes import chat_routes, conversation_routes
@@ -16,6 +19,8 @@ from routes.conversation_routes import router as conversation_router
 from routes.model_routes import router as model_router
 from routes.tool_routes import router as tool_router
 from routes.search_routes import router as search_router
+from routes.mcp_routes import router as mcp_router
+import traceback
 
 # Load environment variables from .env file
 load_dotenv()
@@ -71,19 +76,268 @@ except Exception as e:
     
 
 # Create FastAPI app
-app = FastAPI()
+app = FastAPI(title="Dolphinoko API", 
+              description="API for Dolphinoko - The friendly farm of AI tools", 
+              version="1.0.0")
+
+# Pure MCP endpoint at root level for maximum compatibility
+@app.api_route("/mcp", methods=["GET", "POST"])
+async def root_mcp(request: Request):
+    """Root MCP endpoint that handles all MCP requests"""
+    try:
+        logger.info(f"Root MCP endpoint accessed via {request.method}")
+        
+        # For GET requests, return info
+        if request.method == "GET":
+            logger.info("GET request to /mcp - returning info")
+            return {
+                "name": "Dolphinoko MCP",
+                "version": "1.0.0",
+                "capabilities": ["completion", "chat", "function_call"],
+                "models": ["dolphin3:latest", "llama3:latest", "gemma:7b"],
+                "api_version": "v1"
+            }
+        
+        # For POST requests, process the JSON
+        data = await request.json()
+        logger.info(f"Root MCP endpoint received request: {json.dumps(data)[:200]}...")
+        
+        # Process request based on type
+        request_type = data.get("type", "")
+        
+        if request_type == "info":
+            # Return info about the service
+            return {
+                "name": "Dolphinoko MCP",
+                "version": "1.0.0",
+                "capabilities": ["completion", "chat", "function_call"],
+                "models": ["dolphin3:latest", "llama3:latest", "gemma:7b"],
+                "api_version": "v1"
+            }
+        elif request_type == "completion" or not request_type:
+            # Simulate completion response
+            return {
+                "id": str(uuid.uuid4()),
+                "object": "chat.completion",
+                "created": int(time.time()),
+                "model": data.get("model", "unknown"),
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": "This is a simulated response from the Dolphinoko MCP server."
+                        },
+                        "finish_reason": "stop"
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 10,
+                    "completion_tokens": 10,
+                    "total_tokens": 20
+                }
+            }
+        else:
+            # Unknown request type
+            return {
+                "error": f"Unknown request type: {request_type}"
+            }
+    except Exception as e:
+        logger.error(f"Error in root MCP endpoint: {str(e)}")
+        # Return a friendly error for both GET and POST
+        return JSONResponse(
+            status_code=200,  # Use 200 instead of 500 to avoid unnecessary errors
+            content={
+                "name": "Dolphinoko MCP",
+                "error": str(e),
+                "message": "Error processing request, but the server is running"
+            }
+        )
+
+# Direct streaming endpoint at the root level
+@app.post("/stream")
+async def root_stream_post(request: Request):
+    """Root streaming endpoint (POST)"""
+    logger.info("Root /stream endpoint accessed via POST")
+    return await root_stream(request)
+
+@app.get("/stream")
+async def root_stream_get(request: Request):
+    """Root streaming endpoint (GET)"""
+    logger.info("Root /stream endpoint accessed via GET")
+    return await root_stream(request)
+
+async def root_stream(request: Request):
+    """Direct streaming endpoint at root level"""
+    logger.info("Root /stream endpoint accessed for streaming")
+    
+    # Set the response headers that Cursor expects
+    response_headers = {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive", 
+        "X-Accel-Buffering": "no"
+    }
+    
+    # Cursor-formatted streaming response
+    async def cursor_stream_generator():
+        try:
+            # Full response content
+            content = "This is a direct response from the root streaming endpoint."
+            
+            # Generate a unique response ID
+            response_id = f"chatcmpl-{uuid.uuid4()}"
+            create_time = int(time.time())
+            
+            # Initial message with role
+            initial_data = {
+                "id": response_id,
+                "object": "chat.completion.chunk",
+                "created": create_time,
+                "model": "default_model",
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {
+                            "role": "assistant"
+                        },
+                        "finish_reason": None
+                    }
+                ]
+            }
+            yield f"data: {json.dumps(initial_data)}\n\n"
+            
+            # Stream content word by word
+            words = content.split()
+            for word in words:
+                await asyncio.sleep(0.05)  # Delay between words
+                chunk_data = {
+                    "id": response_id,
+                    "object": "chat.completion.chunk",
+                    "created": create_time,
+                    "model": "default_model",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {
+                                "content": word + " "
+                            },
+                            "finish_reason": None
+                        }
+                    ]
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
+            
+            # Final chunk with finish reason
+            final_data = {
+                "id": response_id,
+                "object": "chat.completion.chunk",
+                "created": create_time,
+                "model": "default_model",
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {},
+                        "finish_reason": "stop"
+                    }
+                ]
+            }
+            yield f"data: {json.dumps(final_data)}\n\n"
+            
+            # End the stream
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            logger.error(f"Error in cursor stream generator: {str(e)}")
+            logger.error(traceback.format_exc())
+            error_data = {
+                "error": {
+                    "message": str(e),
+                    "type": "server_error"
+                }
+            }
+            yield f"data: {json.dumps(error_data)}\n\n"
+            yield "data: [DONE]\n\n"
+    
+    # Return streaming response with correct content type
+    return StreamingResponse(
+        content=cursor_stream_generator(),
+        media_type="text/event-stream",
+        headers=response_headers
+    )
+
+# Add root endpoint with HTML landing page
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    """Root endpoint - HTML landing page with debug info"""
+    logger.info("Root endpoint accessed, providing HTML landing page")
+    
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Dolphinoko MCP Server</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+            h1 { color: #2c3e50; }
+            .endpoint { background: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
+            .button { display: inline-block; background: #3498db; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; }
+            pre { background: #f1f1f1; padding: 10px; overflow: auto; }
+        </style>
+    </head>
+    <body>
+        <h1>Dolphinoko MCP Server</h1>
+        <p>This server is running properly. You can access the MCP endpoints below:</p>
+        
+        <div class="endpoint">
+            <h3>MCP Info</h3>
+            <a class="button" href="/mcp/info" target="_blank">View Info</a>
+        </div>
+        
+        <div class="endpoint">
+            <h3>MCP Test</h3>
+            <a class="button" href="/mcp/test" target="_blank">Run Test</a>
+        </div>
+        
+        <div class="endpoint">
+            <h3>API Version Info</h3>
+            <a class="button" href="/mcp/v1" target="_blank">View API Info</a>
+        </div>
+        
+        <h2>For Cursor Integration</h2>
+        <p>Use this configuration in your <code>mcp.json</code>:</p>
+        <pre>
+{
+  "mcpServers": {
+    "dolphinoko": {
+      "host": "127.0.0.1",
+      "port": 8080,
+      "url": "http://127.0.0.1:8080"
+    }
+  }
+}
+        </pre>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html_content)
+
+# Include routers
 app.include_router(chat_router)
 app.include_router(conversation_router)
 app.include_router(model_router)
 app.include_router(tool_router)
 app.include_router(search_router)
+app.include_router(mcp_router)
 
+# Expanded CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://0.0.0.0:7687", "http://localhost:8080", "http://localhost:8000", "http://192.168.0.249:3000"],  # Add your frontend URL
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://192.168.0.249:3000"],  # Specific origins instead of wildcard
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+    expose_headers=["Content-Type", "Content-Length", "Content-Disposition"],
+    max_age=600,  # Cache preflight requests for 10 minutes
 )
 
 # Define the models
@@ -403,4 +657,7 @@ async def check_ollama_status():
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    # Use environment variable for port or default to 8080
+    port = int(os.getenv("API_PORT", "8080"))
+    logger.info(f"Starting server on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)

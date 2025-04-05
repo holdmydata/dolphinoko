@@ -1,9 +1,9 @@
 # backend/services/memory_service.py
 import logging
 from typing import List, Dict, Any, Optional
-from .embedding_service import EmbeddingService
+from services.embedding_service import EmbeddingService
 # Import your chosen storage implementation
-from .embedding_storage import SQLiteEmbeddingStorage  # or FAISS, Chroma, etc.
+from services.embedding_storage import SQLiteEmbeddingStorage  # or FAISS, Chroma, etc.
 
 logger = logging.getLogger(__name__)
 

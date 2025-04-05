@@ -4,7 +4,7 @@ import sqlite3
 import logging
 import datetime
 from typing import List, Dict, Any, Optional
-from .storage_interface import StorageInterface
+from services.storage_interface import StorageInterface
 
 logger = logging.getLogger(__name__)
 

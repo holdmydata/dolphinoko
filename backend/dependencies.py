@@ -1,4 +1,4 @@
-# backend/dependencies.py
+# dependencies.py
 import os
 import logging
 from services.neo4j_service import Neo4jService

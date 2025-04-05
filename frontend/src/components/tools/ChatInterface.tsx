@@ -260,7 +260,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       // If no chat tool exists yet, try to create one
       if (!chatTool && toolContext && !toolContext.loading) {
         try {
-          chatTool = await ensureChatTool(toolContext, provider, modelName);
+          const newChatTool = await ensureChatTool(toolContext, provider, modelName);
+          if (newChatTool) {
+            chatTool = newChatTool;
+          }
         } catch (err) {
           console.warn(
             "Failed to create chat tool, falling back to direct API call:",
@@ -893,7 +896,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-farm-earth-light/10 h-[60vh]" style={{overflowY: 'auto'}}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-farm-earth-light/10 min-h-[300px] h-[calc(100vh-320px)]" style={{overflowY: 'auto'}}>
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-farm-brown-dark/60">
             <div className="text-center">
@@ -1052,7 +1055,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
       
       {/* Input area */}
-      <div className="p-3 border-t border-farm-brown/20 bg-white/80">
+      <div className="p-3 border-t border-farm-brown/20 bg-white/80 sticky bottom-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -1068,7 +1071,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               modelName ? `Plant a message for ${modelName}...` : "Select a model first..."
             }
             disabled={!modelName || isLoading}
-            className="flex-1 min-h-20 max-h-60 resize-y border-farm-brown/20 focus:ring-farm-green"
+            className="flex-1 min-h-16 max-h-32 resize-y border-farm-brown/20 focus:ring-farm-green"
             fullWidth
           />
           <Button

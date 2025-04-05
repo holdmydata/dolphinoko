@@ -74,6 +74,15 @@ export const availableCharacters: Character[] = [
     role: 'Guardian',
     description: 'A protective bear who manages security and privacy',
     toolCategory: 'security'
+  },
+  {
+    id: 'blender',
+    name: 'Blender-san',
+    type: 'fox',
+    color: '#5C8374',
+    role: '3D Specialist',
+    description: 'A technical fox who helps with 3D modeling and Blender operations',
+    toolCategory: 'blender'
   }
 ];
 
