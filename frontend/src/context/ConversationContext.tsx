@@ -32,7 +32,39 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Load messages when conversation changes
   useEffect(() => {
     if (conversation) {
-      setMessages(conversation.messages);
+      // Convert API message format to UIMessage format
+      const convertedMessages: UIMessage[] = conversation.messages.map((apiMsg) => {
+        // Create base message
+        const message: UIMessage = {
+          id: apiMsg.id,
+          role: apiMsg.role as "user" | "assistant",
+          content: apiMsg.content,
+          timestamp: new Date(apiMsg.timestamp),
+        };
+        
+        // Check for tool execution data in metadata
+        if (apiMsg.metadata && apiMsg.tool_id) {
+          // If we have metadata and a tool ID, try to reconstruct the tool execution
+          const toolExecution: ToolExecutionEvent = {
+            id: apiMsg.id,
+            toolId: apiMsg.tool_id,
+            toolName: apiMsg.metadata.toolName || apiMsg.tool_id,
+            input: apiMsg.metadata.input || {},
+            output: apiMsg.metadata.output || apiMsg.content,
+            startTime: new Date(apiMsg.metadata.startTime || apiMsg.timestamp),
+            endTime: apiMsg.metadata.endTime ? new Date(apiMsg.metadata.endTime) : undefined,
+            status: apiMsg.metadata.status || "success",
+            metrics: apiMsg.metadata.metrics || {}
+          };
+          
+          // Add tool execution to message
+          message.toolExecution = toolExecution;
+        }
+        
+        return message;
+      });
+      
+      setMessages(convertedMessages);
     } else {
       setMessages([]);
     }

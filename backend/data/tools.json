@@ -19,7 +19,7 @@
     "description": "Converts plain text instructions into properly formatted MCP prompt templates",
     "provider": "ollama",
     "model": "dolphin3:latest",
-    "prompt_template": "Convert the following natural language instructions into a properly formatted MCP prompt template using {input} placeholders for user inputs.\n\nInstructions: {input}\n\nReturn just the formatted prompt template.",
+    "prompt_template": "Convert the following natural language instructions into a properly formatted MCP prompt template with appropriate placeholders:\n\n{input}\n\nReturn just the template without explanations.",
     "parameters": {
       "temperature": 0.3,
       "max_tokens": 800
@@ -261,5 +261,47 @@
     },
     "created_at": "2025-03-14T10:05:00Z",
     "updated_at": "2025-04-03T01:14:58Z"
+  },
+  {
+    "id": "blender-natural-language",
+    "name": "Blender Natural Language Control",
+    "description": "Create and manipulate objects in Blender using natural language commands",
+    "provider": "blender",
+    "model": "blender",
+    "character_category": "blender",
+    "prompt_template": "{input}",
+    "parameters": {},
+    "category": "3D",
+    "subcategory": "Blender",
+    "created_at": "2025-04-11T10:00:00Z",
+    "updated_at": "2025-04-11T10:00:00Z"
+  },
+  {
+    "id": "blender-create-object",
+    "name": "Create Object in Blender",
+    "description": "Create a 3D object in Blender with specific parameters",
+    "provider": "blender",
+    "model": "blender",
+    "character_category": "blender",
+    "prompt_template": "Create a {input.type} in Blender at position {input.location} with size {input.size}",
+    "parameters": {},
+    "category": "3D",
+    "subcategory": "Blender",
+    "created_at": "2025-04-11T10:15:00Z",
+    "updated_at": "2025-04-11T10:15:00Z"
+  },
+  {
+    "id": "blender-execute-code",
+    "name": "Execute Blender Python",
+    "description": "Execute Python code directly in Blender",
+    "provider": "blender",
+    "model": "blender",
+    "character_category": "blender",
+    "prompt_template": "{input}",
+    "parameters": {},
+    "category": "3D",
+    "subcategory": "Blender",
+    "created_at": "2025-04-11T10:30:00Z",
+    "updated_at": "2025-04-11T10:30:00Z"
   }
 ]

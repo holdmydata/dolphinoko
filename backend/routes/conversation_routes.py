@@ -276,3 +276,45 @@ async def get_conversation_memory(
         })
     
     return formatted_messages
+
+@router.get("", response_model=List[dict])
+async def list_conversations(
+    limit: int = 20,
+    offset: int = 0,
+    storage_service = Depends(get_storage_service)
+):
+    """Get a list of all conversations"""
+    conversations = storage_service.get_all_conversations(limit, offset)
+    
+    # Format dates and add empty messages array for consistency
+    formatted_conversations = []
+    for conv in conversations:
+        # Handle timestamps based on storage type
+        if hasattr(conv["created_at"], "iso_format"):
+            created_at = conv["created_at"].iso_format()
+        else:
+            created_at = conv.get("created_at", datetime.now().isoformat())
+            
+        if hasattr(conv["updated_at"], "iso_format"):
+            updated_at = conv["updated_at"].iso_format()
+        else:
+            updated_at = conv.get("updated_at", datetime.now().isoformat())
+            
+        # Get the first message for preview (limited to 100 characters)
+        preview = ""
+        first_messages = storage_service.get_conversation_messages(conv["id"])
+        if first_messages and len(first_messages) > 0:
+            first_user_message = next((msg for msg in first_messages if msg["role"] == "user"), None)
+            if first_user_message:
+                preview = first_user_message["content"]
+                if len(preview) > 100:
+                    preview = preview[:97] + "..."
+        
+        formatted_conversations.append({
+            "id": conv["id"],
+            "created_at": created_at,
+            "updated_at": updated_at,
+            "preview": preview
+        })
+    
+    return formatted_conversations

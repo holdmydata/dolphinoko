@@ -293,6 +293,30 @@ class SQLiteStorage(StorageInterface):
         logger.warning("SQLite storage doesn't support vector similarity search directly")
         return []
 
+    def get_all_conversations(self, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
+        """Get all conversations with pagination"""
+        if not self.conn:
+            logger.error("No SQLite connection available")
+            return []
+        
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+            SELECT * FROM conversations 
+            ORDER BY updated_at DESC
+            LIMIT ? OFFSET ?
+            """, (limit, offset))
+            
+            conversations = []
+            for row in cursor.fetchall():
+                conversation = dict(row)
+                conversations.append(conversation)
+            
+            return conversations
+        except Exception as e:
+            logger.error(f"Error retrieving all conversations from SQLite: {str(e)}")
+            return []
+
     def close(self) -> None:
         """Close the SQLite connection"""
         if self.conn:

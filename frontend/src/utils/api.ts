@@ -54,6 +54,20 @@ export const conversations = {
   // Add a message to a conversation
   addMessage: (conversationId: string, message: MessageCreate): Promise<Message> => 
     api.post<Message>(`/api/conversations/${conversationId}/messages`, message),
+    
+  // List all conversations
+  list: (limit: number = 20, offset: number = 0): Promise<Array<{
+    id: string;
+    created_at: string;
+    updated_at: string;
+    preview: string;
+  }>> => 
+    api.get<Array<{
+      id: string;
+      created_at: string;
+      updated_at: string;
+      preview: string;
+    }>>(`/api/conversations?limit=${limit}&offset=${offset}`)
 };
 
 // Generic request handler

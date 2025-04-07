@@ -21,6 +21,12 @@
   --farm-wood: #a1887f;
   --farm-wood-light: #d7ccc8;
   --farm-wood-dark: #795548;
+  
+  /* Text colors with improved contrast */
+  --text-on-dark: #ffffff;
+  --text-on-light: #3c3c3c;
+  --text-muted-light: #757575;
+  --text-muted-dark: #e0e0e0;
 }
 
 /* Utility classes for background colors */
@@ -44,14 +50,22 @@
 .bg-farm-wood-light { background-color: var(--farm-wood-light); }
 .bg-farm-wood-dark { background-color: var(--farm-wood-dark); }
 
-/* Text colors */
-.text-farm-green { color: var(--farm-green); }
+/* Text colors with better contrast */
+.text-farm-green { color: var(--farm-green-dark); }
 .text-farm-green-dark { color: var(--farm-green-dark); }
-.text-farm-blue { color: var(--farm-blue); }
+.text-farm-blue { color: var(--farm-blue-dark); }
 .text-farm-blue-dark { color: var(--farm-blue-dark); }
 .text-farm-brown { color: var(--farm-brown-dark); }
 .text-farm-earth { color: var(--farm-earth); }
-.text-farm-wood { color: var(--farm-wood); }
+.text-farm-wood { color: var(--farm-wood-dark); }
+
+/* Text on dark backgrounds */
+.text-on-dark { color: var(--text-on-dark); }
+.text-muted-on-dark { color: var(--text-muted-dark); }
+
+/* Text on light backgrounds */
+.text-on-light { color: var(--text-on-light); }
+.text-muted-on-light { color: var(--text-muted-light); }
 
 /* Border colors */
 .border-farm-green { border-color: var(--farm-green-dark); }
@@ -117,7 +131,7 @@
   z-index: -1;
 }
 
-/* Farm panels - updated with cleaner style */
+/* Farm panels - updated with cleaner style and better text contrast */
 .farm-panel {
   background-color: #ffffff;
   border: 2px solid var(--farm-brown);
@@ -129,7 +143,7 @@
 
 .farm-panel-title {
   background-color: var(--farm-brown);
-  color: #fff;
+  color: #ffffff; /* Better contrast for panel titles */
   padding: 0.75rem 1rem;
   font-weight: 600;
   border-bottom: 2px solid var(--farm-brown-dark);
@@ -170,10 +184,15 @@
   border-radius: inherit;
 }
 
-/* Dark mode adjustments */
+/* Dark mode adjustments with better contrast */
 .dark .farm-panel {
   background-color: rgba(50, 50, 65, 0.9);
   border-color: var(--farm-earth-dark);
+}
+
+.dark .farm-panel-title {
+  background-color: var(--farm-earth-dark);
+  color: #ffffff;
 }
 
 .dark .farm-button {

@@ -206,6 +206,22 @@ async def mcp_info():
         if not model_names:
             model_names = ["dolphin3:latest", "llama3:latest", "gemma:7b"]
             
+        # Add Blender to the list of available models if the blender server is running
+        try:
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                async with session.get("http://localhost:8080/blender/status") as response:
+                    if response.status == 200:
+                        blender_status = await response.json()
+                        if blender_status.get("connected", False):
+                            model_names.append("blender")
+                    else:
+                        # If error connecting to Blender, still add it as an option
+                        model_names.append("blender")
+        except:
+            # If error connecting to Blender, still add it as an option
+            model_names.append("blender")
+            
         return {
             "name": "Dolphinoko MCP",
             "version": "1.0.0",
@@ -220,7 +236,7 @@ async def mcp_info():
             "name": "Dolphinoko MCP",
             "version": "1.0.0",
             "capabilities": ["completion", "chat", "function_call"],
-            "models": ["dolphin3:latest", "llama3:latest", "gemma:7b"],
+            "models": ["dolphin3:latest", "llama3:latest", "gemma:7b", "blender"],
             "api_version": "v1",
             "error": str(e)
         }

@@ -20,6 +20,7 @@ from routes.model_routes import router as model_router
 from routes.tool_routes import router as tool_router
 from routes.search_routes import router as search_router
 from routes.mcp_routes import router as mcp_router
+from routes.blender_routes import router as blender_router
 import traceback
 
 # Load environment variables from .env file
@@ -302,6 +303,19 @@ async def root():
             <a class="button" href="/mcp/v1" target="_blank">View API Info</a>
         </div>
         
+        <h2>Blender Integration</h2>
+        <div class="endpoint">
+            <h3>Blender Connection Status</h3>
+            <a class="button" href="/blender/status" target="_blank">Check Status</a>
+        </div>
+        
+        <div class="endpoint">
+            <h3>Connect to Blender</h3>
+            <a class="button" href="/blender/connect" target="_blank">Connect</a>
+        </div>
+        
+        <p>Make sure you have the Blender addon installed and activated in Blender with the server running on port 9334.</p>
+        
         <h2>For Cursor Integration</h2>
         <p>Use this configuration in your <code>mcp.json</code>:</p>
         <pre>
@@ -328,6 +342,7 @@ app.include_router(model_router)
 app.include_router(tool_router)
 app.include_router(search_router)
 app.include_router(mcp_router)
+app.include_router(blender_router)
 
 # Expanded CORS settings
 app.add_middleware(

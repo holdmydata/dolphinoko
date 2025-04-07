@@ -167,3 +167,28 @@ MIT License (for our code). Models and third-party libraries maintain their own 
 - [Eric's Dolphin MCP](https://github.com/cognitivecomputations/dolphin-mcp) for the underlying MCP implementation
 - [Ollama](https://ollama.ai/) for the local model inference
 - The farming and kawaii aesthetics that inspired our new UI
+
+## Integrations
+
+### Blender Integration (Model Context Protocol)
+
+Dolphinoko includes a Blender integration through the Model Context Protocol (MCP) that allows AI models to control and manipulate 3D scenes in Blender.
+
+#### Setup Instructions
+
+1. Install the Blender addon:
+   - Find the `addon.py` file in the `assets/blender` directory
+   - In Blender, go to Edit > Preferences > Add-ons
+   - Click "Install..." and select the `addon.py` file
+   - Enable the addon by checking the box
+
+2. Connect to Blender:
+   - In Blender, find the "Dolphinoko" tab in the sidebar (press N if not visible)
+   - Click "Connect to Dolphinoko"
+   - You should see "Server Status: Running on port 9334"
+
+3. Use the API:
+   - The API endpoints are available at `/blender/`
+   - You can also use the AI to control Blender by asking it to perform actions
+
+For more detailed instructions, see the [Blender Integration README](assets/blender/README.md).

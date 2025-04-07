@@ -150,6 +150,124 @@ async def execute_tool(
                     output = f"[Note: Using {metadata.get('model')} instead of {original_model}]\n\n{output}"
                     metadata["model_fallback"] = True
                     metadata["original_model"] = original_model
+        elif tool["provider"] == "blender":
+            # Handle Blender tool requests
+            try:
+                import aiohttp
+                async with aiohttp.ClientSession() as session:
+                    # Check if Blender is connected
+                    async with session.get("http://localhost:8080/blender/status") as response:
+                        status = await response.json()
+                        if not status.get("connected", False):
+                            output = "Error: The Blender addon is not currently connected. Please make sure the Blender addon is running and connected."
+                            metadata = {"error": True}
+                        else:
+                            # Process based on the specific tool
+                            if tool["id"] == "blender-create-object":
+                                # Extract parameters from structured input
+                                obj_type = request.input.get("type", "CUBE")
+                                obj_name = request.input.get("name", f"Object_{str(uuid4())[:8]}")
+                                location = request.input.get("location", [0, 0, 0])
+                                size = request.input.get("size", [1, 1, 1])
+                                color = request.input.get("color", [0.8, 0.8, 0.8, 1.0])
+                                
+                                # Send create object request
+                                async with session.post(
+                                    "http://localhost:8080/blender/objects",
+                                    json={
+                                        "object_type": obj_type,
+                                        "name": obj_name,
+                                        "location": location,
+                                        "size": size,
+                                        "color": color
+                                    }
+                                ) as obj_response:
+                                    result = await obj_response.json()
+                                    if result.get("status") == "error":
+                                        output = f"Error: {result.get('message', 'Unknown error creating object')}"
+                                        metadata = {"error": True}
+                                    else:
+                                        output = f"Successfully created {obj_type} object named '{obj_name}' in Blender"
+                                        metadata = {"object_created": True, "object_name": obj_name}
+                                        
+                            elif tool["id"] == "blender-execute-code":
+                                # Execute Python code directly
+                                code = request.input
+                                if not isinstance(code, str):
+                                    code = str(code)
+                                    
+                                async with session.post(
+                                    "http://localhost:8080/blender/execute",
+                                    json={"code": code}
+                                ) as code_response:
+                                    result = await code_response.json()
+                                    if result.get("status") == "error":
+                                        output = f"Error: {result.get('message', 'Unknown error executing code')}"
+                                        metadata = {"error": True}
+                                    else:
+                                        output = f"Successfully executed code in Blender. Result: {result.get('result', 'Code executed')}"
+                                        metadata = {"code_executed": True}
+                            elif tool["id"] == "blender-natural-language":
+                                # Process natural language commands
+                                text_prompt = request.input
+                                if not isinstance(text_prompt, str):
+                                    text_prompt = str(text_prompt)
+                                    
+                                async with session.post(
+                                    "http://localhost:8080/blender/command",
+                                    json={"type": "natural_language", "params": {
+                                        "text": text_prompt
+                                    }}
+                                ) as nl_response:
+                                    result = await nl_response.json()
+                                    if result.get("status") == "error":
+                                        output = f"Error: {result.get('message', 'Failed to process natural language command')}"
+                                        metadata = {"error": True}
+                                    else:
+                                        output = f"Successfully processed: {result.get('result', 'Command executed')}"
+                                        metadata = {"nl_processed": True}
+                            else:
+                                # Check if it's potentially a natural language request
+                                if isinstance(request.input, str) and len(request.input.split()) > 2:
+                                    # This looks like a natural language command, use the natural_language handler
+                                    async with session.post(
+                                        "http://localhost:8080/blender/command",
+                                        json={"type": "natural_language", "params": {
+                                            "text": request.input
+                                        }}
+                                    ) as nl_response:
+                                        result = await nl_response.json()
+                                        if result.get("status") == "error":
+                                            output = f"Error: {result.get('message', 'Failed to process natural language command')}"
+                                            metadata = {"error": True}
+                                        else:
+                                            output = f"Successfully processed: {result.get('result', 'Command executed')}"
+                                            metadata = {"nl_processed": True}
+                                else:
+                                    # Use generic command execution for other tools
+                                    async with session.post(
+                                        "http://localhost:8080/blender/command",
+                                        json={"type": "execute_blender_code", "params": {
+                                            "code": f"""
+try:
+    # Executing command from tool: {tool['name']}
+    {formatted_prompt}
+    result = "Command executed successfully"
+except Exception as e:
+    result = f"Error: {{str(e)}}"
+"""
+                                        }}
+                                    ) as cmd_response:
+                                        result = await cmd_response.json()
+                                        if result.get("status") == "error":
+                                            output = f"Error: {result.get('message', 'Unknown error')}"
+                                            metadata = {"error": True}
+                                        else:
+                                            output = f"Successfully executed in Blender: {result.get('result', 'Command completed')}"
+                                            metadata = {"command_executed": True}
+            except Exception as e:
+                output = f"Error communicating with Blender: {str(e)}"
+                metadata = {"error": True}
         elif tool["provider"] == "anthropic":
             # Import your anthropic service if implemented
             # This is a placeholder for your Anthropic implementation

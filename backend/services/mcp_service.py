@@ -9,6 +9,7 @@ import json
 import uuid
 import traceback
 import asyncio
+import aiohttp
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -138,6 +139,10 @@ class MCPService:
                 logger.info(f"Stream requested for model {model}, redirecting to streaming handler")
                 return {"stream": True, "request": request}
             
+            # Special case for Blender model
+            if model.lower() == "blender":
+                return await self.handle_blender_request(messages)
+            
             # Log request details
             logger.info(f"MCP completion request: model={model}, messages_count={len(messages)}")
             
@@ -196,6 +201,272 @@ class MCPService:
         except Exception as e:
             logger.error(f"Error in MCP completion: {str(e)}")
             return {"error": str(e)}
+    
+    async def handle_blender_request(self, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Handle a request for the Blender model"""
+        try:
+            # Get the last user message
+            last_message = None
+            for msg in reversed(messages):
+                if msg.get("role") == "user":
+                    last_message = msg.get("content", "")
+                    break
+                
+            if not last_message:
+                return {
+                    "id": str(uuid.uuid4()),
+                    "choices": [{
+                        "message": {
+                            "role": "assistant",
+                            "content": "I didn't receive any instructions for Blender."
+                        },
+                        "finish_reason": "stop"
+                    }]
+                }
+            
+            # Execute the command in Blender via our API
+            async with aiohttp.ClientSession() as session:
+                # First check if Blender is connected
+                try:
+                    async with session.get("http://localhost:8080/blender/status") as response:
+                        status = await response.json()
+                        if not status.get("connected", False):
+                            return {
+                                "id": str(uuid.uuid4()),
+                                "choices": [{
+                                    "message": {
+                                        "role": "assistant",
+                                        "content": "The Blender addon is not currently connected. Please make sure the Blender addon is running and connected."
+                                    },
+                                    "finish_reason": "stop"
+                                }]
+                            }
+                except Exception as connection_error:
+                    logger.error(f"Error checking Blender connection: {str(connection_error)}")
+                    return {
+                        "id": str(uuid.uuid4()),
+                        "choices": [{
+                            "message": {
+                                "role": "assistant",
+                                "content": f"Error connecting to Blender: {str(connection_error)}"
+                            },
+                            "finish_reason": "stop"
+                        }]
+                    }
+                
+                # Now execute the command
+                # First, determine if this is a natural language command or a direct Python code snippet
+                if last_message.strip().startswith("```python") or last_message.strip().startswith("```blender"):
+                    # Extract code from Markdown code block
+                    try:
+                        code_lines = last_message.strip().split('\n')
+                        # Remove first and last line if they're code markers
+                        if code_lines[0].startswith("```"):
+                            code_lines = code_lines[1:]
+                        if code_lines[-1].startswith("```"):
+                            code_lines = code_lines[:-1]
+                        code = '\n'.join(code_lines)
+                        
+                        logger.info(f"Executing Blender Python code: {code[:100]}...")
+                        
+                        # Execute Python code directly
+                        async with session.post(
+                            "http://localhost:8080/blender/command",
+                            json={"type": "execute_blender_code", "params": {"code": code}}
+                        ) as code_response:
+                            result = await code_response.json()
+                            logger.info(f"Blender code execution result: {result}")
+                            
+                            if result.get("status") == "error":
+                                return {
+                                    "id": str(uuid.uuid4()),
+                                    "choices": [{
+                                        "message": {
+                                            "role": "assistant",
+                                            "content": f"Error executing code in Blender: {result.get('message', 'Unknown error')}"
+                                        },
+                                        "finish_reason": "stop"
+                                    }]
+                                }
+                            else:
+                                return {
+                                    "id": str(uuid.uuid4()),
+                                    "choices": [{
+                                        "message": {
+                                            "role": "assistant",
+                                            "content": f"Successfully executed code in Blender. Result: {result.get('result', 'Code executed')}"
+                                        },
+                                        "finish_reason": "stop"
+                                    }]
+                                }
+                    except Exception as code_error:
+                        logger.error(f"Error processing code block: {str(code_error)}")
+                        return {
+                            "id": str(uuid.uuid4()),
+                            "choices": [{
+                                "message": {
+                                    "role": "assistant",
+                                    "content": f"Error processing code block: {str(code_error)}"
+                                },
+                                "finish_reason": "stop"
+                            }]
+                        }
+                else:
+                    # Treat as natural language command
+                    try:
+                        # First try to use the natural language handler
+                        logger.info(f"Processing natural language Blender command: {last_message[:100]}...")
+                        
+                        async with session.post(
+                            "http://localhost:8080/blender/command",
+                            json={"type": "natural_language", "params": {"text": last_message}}
+                        ) as nl_response:
+                            # Check if the natural language handler exists
+                            if nl_response.status == 200:
+                                result = await nl_response.json()
+                                logger.info(f"Natural language processing result: {result}")
+                                
+                                if result.get("status") == "error":
+                                    if "Unknown command" in result.get("message", ""):
+                                        # Natural language handler not found, fallback to code execution
+                                        # This is a fallback for older addon versions
+                                        logger.info("Natural language handler not found, executing as code")
+                                        
+                                        # Add some basic safety checks
+                                        exec_code = f"""
+try:
+    # Try your best to execute this command
+    {last_message}
+    result = "Command executed successfully"
+except Exception as e:
+    result = f"Error: {{str(e)}}"
+"""
+                                        
+                                        async with session.post(
+                                            "http://localhost:8080/blender/command",
+                                            json={"type": "execute_blender_code", "params": {"code": exec_code}}
+                                        ) as code_response:
+                                            result = await code_response.json()
+                                            logger.info(f"Fallback code execution result: {result}")
+                                            
+                                            # Process the response
+                                            if result.get("status") == "error":
+                                                return {
+                                                    "id": str(uuid.uuid4()),
+                                                    "choices": [{
+                                                        "message": {
+                                                            "role": "assistant",
+                                                            "content": f"Error executing command in Blender: {result.get('message', 'Unknown error')}"
+                                                        },
+                                                        "finish_reason": "stop"
+                                                    }]
+                                                }
+                                            else:
+                                                execution_result = result.get("result", "Command executed")
+                                                return {
+                                                    "id": str(uuid.uuid4()),
+                                                    "choices": [{
+                                                        "message": {
+                                                            "role": "assistant",
+                                                            "content": f"Command executed in Blender. Result: {execution_result}"
+                                                        },
+                                                        "finish_reason": "stop"
+                                                    }]
+                                                }
+                                    else:
+                                        # Other natural language processing error
+                                        return {
+                                            "id": str(uuid.uuid4()),
+                                            "choices": [{
+                                                "message": {
+                                                    "role": "assistant",
+                                                    "content": f"Error processing natural language command: {result.get('message', 'Unknown error')}"
+                                                },
+                                                "finish_reason": "stop"
+                                            }]
+                                        }
+                                else:
+                                    # Successful natural language processing
+                                    execution_result = result.get("result", "Command executed")
+                                    return {
+                                        "id": str(uuid.uuid4()),
+                                        "choices": [{
+                                            "message": {
+                                                "role": "assistant",
+                                                "content": f"Successfully processed command in Blender. Result: {execution_result}"
+                                            },
+                                            "finish_reason": "stop"
+                                        }]
+                                    }
+                            else:
+                                # Natural language handler not found or error
+                                logger.warning(f"Natural language handler error: {nl_response.status}")
+                                # Fall back to code execution
+                                exec_code = f"""
+try:
+    # Try your best to execute this command
+    {last_message}
+    result = "Command executed successfully"
+except Exception as e:
+    result = f"Error: {{str(e)}}"
+"""
+                                
+                                async with session.post(
+                                    "http://localhost:8080/blender/command",
+                                    json={"type": "execute_blender_code", "params": {"code": exec_code}}
+                                ) as code_response:
+                                    result = await code_response.json()
+                                    logger.info(f"Fallback code execution result: {result}")
+                                    
+                                    # Process the response
+                                    if result.get("status") == "error":
+                                        return {
+                                            "id": str(uuid.uuid4()),
+                                            "choices": [{
+                                                "message": {
+                                                    "role": "assistant",
+                                                    "content": f"Error executing command in Blender: {result.get('message', 'Unknown error')}"
+                                                },
+                                                "finish_reason": "stop"
+                                            }]
+                                        }
+                                    else:
+                                        execution_result = result.get("result", "Command executed")
+                                        return {
+                                            "id": str(uuid.uuid4()),
+                                            "choices": [{
+                                                "message": {
+                                                    "role": "assistant",
+                                                    "content": f"Command executed in Blender. Result: {execution_result}"
+                                                },
+                                                "finish_reason": "stop"
+                                            }]
+                                        }
+                    except Exception as nl_error:
+                        logger.error(f"Error in natural language processing: {str(nl_error)}")
+                        return {
+                            "id": str(uuid.uuid4()),
+                            "choices": [{
+                                "message": {
+                                    "role": "assistant",
+                                    "content": f"Error processing command: {str(nl_error)}"
+                                },
+                                "finish_reason": "stop"
+                            }]
+                        }
+                
+        except Exception as e:
+            logger.error(f"Error handling Blender request: {str(e)}")
+            return {
+                "id": str(uuid.uuid4()),
+                "choices": [{
+                    "message": {
+                        "role": "assistant",
+                        "content": f"Error handling Blender request: {str(e)}"
+                    },
+                    "finish_reason": "stop"
+                }]
+            }
     
     async def handle_chat_completion(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Handle a chat completion request using MCP protocol"""

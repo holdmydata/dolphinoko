@@ -13,10 +13,12 @@ import {
 } from "../utils/toolMonitoringStorage";
 import { useTools } from "../hooks/useTools";
 import { useCharacter } from "../context/CharacterContext";
-import { useConversation } from "../context/ConversationContext";
+import { useConversation, UIMessage } from "../context/ConversationContext";
 import { ensureChatTool } from "../utils/ensureTools";
 import ChatProcessor, { ProcessedMessage } from "../utils/ChatProcessor";
 import { useModelSettings } from "../context/ModelSettingsContext";
+import AgentThinkingPanel from "../components/tools/AgentThinkingPanel";
+import { api, conversations } from "../utils/api"; // Import the conversations API
 
 // Update ChatProcessor to include necessary methods
 class ExtendedChatProcessor extends ChatProcessor {
@@ -31,6 +33,14 @@ class ExtendedChatProcessor extends ChatProcessor {
   }
 }
 
+// Define the ChatHistoryItem interface
+interface ChatHistoryItem {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  preview: string;
+}
+
 const Chat: React.FC = () => {
   const { modelSettings } = useModelSettings();
   const [selectedModel, setSelectedModel] = useState<string>(modelSettings.baseModel);
@@ -40,6 +50,12 @@ const Chat: React.FC = () => {
   );
   const [isMonitorExpanded, setIsMonitorExpanded] = useState<boolean>(false);
   const [isCharacterPickerOpen, setIsCharacterPickerOpen] = useState<boolean>(false);
+  const [isAgentThinkingVisible, setIsAgentThinkingVisible] = useState<boolean>(false);
+  const [currentThinkingSteps, setCurrentThinkingSteps] = useState<string[]>([]);
+  const [lastExecutedTools, setLastExecutedTools] = useState<ToolExecutionEvent[]>([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const toolContext = useTools();
   const { characters, selectedCharacter, setSelectedCharacter } = useCharacter();
   const chatProcessorRef = useRef<ExtendedChatProcessor | null>(null);
@@ -62,6 +78,21 @@ const Chat: React.FC = () => {
     }
   };
 
+  // History dropdown variants
+  const historyDropdownVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 30 }
+    },
+    exit: { 
+      opacity: 0, 
+      y: -20,
+      transition: { duration: 0.2 }
+    }
+  };
+
   // Providers available
   const providers = [
     { value: "ollama", label: "Ollama (Local)" },
@@ -74,6 +105,7 @@ const Chat: React.FC = () => {
     isLoading,
     createNewConversation,
     sendMessage,
+    loadConversation
   } = useConversation();
 
   // Load execution events from storage
@@ -93,6 +125,13 @@ const Chat: React.FC = () => {
       createNewConversation();
     }
   }, [currentConversationId, createNewConversation]);
+
+  // Load chat history when the history dropdown is opened
+  useEffect(() => {
+    if (isHistoryOpen && chatHistory.length === 0) {
+      loadChatHistory();
+    }
+  }, [isHistoryOpen]);
 
   // Initialize chat processor for the selected character
   useEffect(() => {
@@ -130,6 +169,34 @@ const Chat: React.FC = () => {
       addStoredEvent(event);
       return newEvents;
     });
+    
+    // Add to last executed tools for thinking panel
+    setLastExecutedTools(prev => [event, ...prev.slice(0, 4)]);
+    
+    // Simulate agent thinking steps (in a real implementation, these would come from the backend)
+    const thinkingSteps = [
+      `Analyzing request using ${selectedCharacter?.name || 'assistant'}`,
+      `Selecting appropriate tool: ${event.toolName}`,
+      `Executing ${event.toolName} with parameters`,
+      `Processing results from tool execution`,
+      `Formulating response based on tool output`
+    ];
+    
+    // Show agent thinking panel
+    setCurrentThinkingSteps([]);
+    setIsAgentThinkingVisible(true);
+    
+    // Gradually reveal thinking steps
+    thinkingSteps.forEach((step, index) => {
+      setTimeout(() => {
+        setCurrentThinkingSteps(prev => [...prev, step]);
+      }, index * 1000);
+    });
+    
+    // Hide thinking panel after all steps are shown
+    setTimeout(() => {
+      setIsAgentThinkingVisible(false);
+    }, thinkingSteps.length * 1000 + 2000);
   };
 
   // Clear execution history
@@ -137,6 +204,29 @@ const Chat: React.FC = () => {
     if (window.confirm("Clear all execution history?")) {
       setExecutionEvents([]);
       clearStoredEvents();
+    }
+  };
+  
+  // Load chat history
+  const loadChatHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const history = await conversations.list(20, 0);
+      setChatHistory(history);
+    } catch (error) {
+      console.error("Failed to load chat history:", error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  // Load a specific conversation
+  const handleLoadConversation = async (conversationId: string) => {
+    try {
+      await loadConversation(conversationId);
+      setIsHistoryOpen(false);
+    } catch (error) {
+      console.error("Failed to load conversation:", error);
     }
   };
   
@@ -151,6 +241,22 @@ const Chat: React.FC = () => {
       case 'bear': return '🐻';
       default: return '🐾';
     }
+  };
+
+  // Toggle agent thinking panel
+  const toggleAgentThinking = () => {
+    setIsAgentThinkingVisible(!isAgentThinkingVisible);
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Toggle history dropdown
+  const toggleHistory = () => {
+    setIsHistoryOpen(!isHistoryOpen);
   };
 
   return (
@@ -184,6 +290,87 @@ const Chat: React.FC = () => {
         </svg>
       </motion.button>
       
+      {/* Agent Thinking button (floating) */}
+      <motion.button
+        className="fixed bottom-36 right-4 z-30 w-12 h-12 rounded-full shadow-lg bg-farm-green-light border-2 border-farm-brown flex items-center justify-center"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={toggleAgentThinking}
+      >
+        <svg className="w-6 h-6 text-farm-brown-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+        </svg>
+      </motion.button>
+      
+      {/* History button (floating) */}
+      <motion.button
+        className="fixed bottom-52 right-4 z-30 w-12 h-12 rounded-full shadow-lg bg-farm-blue-light border-2 border-farm-brown flex items-center justify-center"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={toggleHistory}
+      >
+        <svg className="w-6 h-6 text-farm-brown-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </motion.button>
+      
+      {/* History dropdown */}
+      <AnimatePresence>
+        {isHistoryOpen && (
+          <motion.div 
+            className="fixed right-20 bottom-52 w-72 bg-white z-40 rounded-lg shadow-xl border-2 border-farm-brown"
+            variants={historyDropdownVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <div className="p-3 border-b border-farm-brown-light bg-farm-blue-light font-medium flex items-center">
+              <span className="mr-2">📚</span>
+              Chat History
+              <button
+                onClick={() => setIsHistoryOpen(false)}
+                className="ml-auto p-1"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="max-h-96 overflow-y-auto">
+              {isLoadingHistory ? (
+                <div className="p-4 text-center text-farm-brown">
+                  Loading history...
+                </div>
+              ) : chatHistory.length === 0 ? (
+                <div className="p-4 text-center text-farm-brown">
+                  No previous conversations found
+                </div>
+              ) : (
+                <div>
+                  <button
+                    onClick={() => createNewConversation()}
+                    className="w-full p-3 text-left text-farm-brown-dark hover:bg-farm-blue-light/50 border-b border-farm-brown-light/50 flex items-center"
+                  >
+                    <span className="mr-2">✨</span>
+                    New Conversation
+                  </button>
+                  
+                  {chatHistory.map(chat => (
+                    <button
+                      key={chat.id}
+                      onClick={() => handleLoadConversation(chat.id)}
+                      className="w-full p-3 text-left hover:bg-farm-blue-light/20 border-b border-farm-brown-light/50"
+                    >
+                      <div className="text-sm font-medium text-on-light line-clamp-1">{chat.preview || "Empty conversation"}</div>
+                      <div className="text-xs text-muted-on-light">{formatDate(chat.updated_at)}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* Main Chat Interface */}
       <div className="h-full flex-1 overflow-hidden">
         <ChatInterface
@@ -193,12 +380,24 @@ const Chat: React.FC = () => {
           messageProcessor={messageProcessor}
           toolContext={toolContext}
           conversationId={currentConversationId}
-          messages={messages}
+          messages={messages as any}
           isLoading={isLoading}
           sendMessage={sendMessage}
           className="h-full flex flex-col"
         />
       </div>
+      
+      {/* Agent Thinking Panel (slide-in from left) */}
+      <AnimatePresence>
+        {isAgentThinkingVisible && (
+          <AgentThinkingPanel
+            steps={currentThinkingSteps}
+            tools={lastExecutedTools}
+            onClose={() => setIsAgentThinkingVisible(false)}
+            character={selectedCharacter}
+          />
+        )}
+      </AnimatePresence>
       
       {/* LLM Settings & Tool Monitor Panel (slide-in) */}
       <AnimatePresence>

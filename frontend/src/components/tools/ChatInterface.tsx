@@ -10,10 +10,11 @@ import { ToolExecutionEvent } from "./ToolMonitor";
 import { ensureChatTool } from "../../utils/ensureTools";
 import { v4 as uuidv4, v4 } from "uuid";
 import { useConversation } from "../../context/ConversationContext";
-import { Message as ApiMessage } from "../../utils/api";
+import { Message as ApiMessage, Conversation } from "../../utils/api";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { motion } from "framer-motion";
 // Add these type definitions
 interface ProcessedMessage {
   type: "chat" | "tool" | "parameter_request";
@@ -53,10 +54,22 @@ interface ChatInterfaceProps {
   sendMessage?: (content: string, toolId?: string) => Promise<void>;
 }
 
-// Extended message type for UI needs
-interface UIMessage extends ApiMessage {
-  timestamp: Date; // Override timestamp to be a Date instead of string
+// Add a new type for the extended message that includes thinking steps
+export interface MessageThinkingStep {
+  id: string;
+  step: string;
+  timestamp: Date;
+}
+
+// Update the UIMessage type to include thinking steps
+interface UIMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
   toolExecution?: ToolExecutionEvent;
+  thinkingSteps?: MessageThinkingStep[];
+  isThinking?: boolean;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -125,18 +138,43 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (conversationId) {
       // Load messages from existing conversation
       api
-        .get<{ messages: ApiMessage[] }>(`/api/conversations/${conversationId}`)
+        .get<Conversation>(`/api/conversations/${conversationId}`)
         .then((response) => {
           // Convert API message format to your internal format
           const convertedMessages: UIMessage[] = response.messages.map(
-            (apiMsg) => ({
-              id: apiMsg.id,
-              role: apiMsg.role as "user" | "assistant",
-              content: apiMsg.content,
-              timestamp: new Date(apiMsg.timestamp),
-              // Map other fields if needed
-            })
+            (apiMsg) => {
+              // Create base message
+              const message: UIMessage = {
+                id: apiMsg.id,
+                role: apiMsg.role as "user" | "assistant",
+                content: apiMsg.content,
+                timestamp: new Date(apiMsg.timestamp),
+              };
+              
+              // Check for tool execution data in metadata
+              if (apiMsg.metadata && apiMsg.tool_id) {
+                // If we have metadata and a tool ID, try to reconstruct the tool execution
+                const toolExecution: ToolExecutionEvent = {
+                  id: apiMsg.id,
+                  toolId: apiMsg.tool_id,
+                  toolName: apiMsg.metadata.toolName || apiMsg.tool_id,
+                  input: apiMsg.metadata.input || {},
+                  output: apiMsg.metadata.output || apiMsg.content,
+                  startTime: new Date(apiMsg.metadata.startTime || apiMsg.timestamp),
+                  endTime: apiMsg.metadata.endTime ? new Date(apiMsg.metadata.endTime) : undefined,
+                  status: apiMsg.metadata.status || "success",
+                  metrics: apiMsg.metadata.metrics || {}
+                };
+                
+                // Add tool execution to message
+                message.toolExecution = toolExecution;
+              }
+              
+              return message;
+            }
           );
+          
+          // Set messages in state
           setMessages(convertedMessages);
         })
         .catch((err) => {
@@ -199,7 +237,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
     }
 
-    // Try to process with message processor first (for tool detection)
+    // Simulate thinking steps for the assistant (in a real implementation, these would come from the backend)
+    // Add a placeholder for the assistant's "thinking" state
+    const assistantThinkingId = generateId();
+    const assistantThinking: UIMessage = {
+      id: assistantThinkingId,
+      role: "assistant",
+      content: "Thinking...",
+      timestamp: new Date(),
+      isThinking: true,
+      thinkingSteps: []
+    };
+
+    // Add the thinking message to the chat
+    setMessages(prev => [...prev, assistantThinking]);
+
+    // If we're using a tool via message processor, show the thinking process
     if (messageProcessor) {
       try {
         const processed = await messageProcessor(userMessage.content);
@@ -216,6 +269,45 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           });
           setIsLoading(false);
           return;
+        }
+
+        // Add thinking steps gradually if processing with a tool
+        if (processed.type === "tool" && processed.toolId) {
+          // Add thinking steps with a delay between each
+          const steps = [
+            "Analyzing your request...",
+            `Selecting appropriate tool: ${processed.toolId}`,
+            "Preparing parameters...",
+            "Executing tool..."
+          ];
+          
+          // Update the thinking steps one by one
+          steps.forEach((step, index) => {
+            setTimeout(() => {
+              setMessages(prev => {
+                const newMessages = [...prev];
+                const thinkingMessageIndex = newMessages.findIndex(m => m.id === assistantThinkingId);
+                
+                if (thinkingMessageIndex !== -1) {
+                  const newThinkingSteps = [
+                    ...(newMessages[thinkingMessageIndex].thinkingSteps || []),
+                    {
+                      id: generateId(),
+                      step,
+                      timestamp: new Date()
+                    }
+                  ];
+                  
+                  newMessages[thinkingMessageIndex] = {
+                    ...newMessages[thinkingMessageIndex],
+                    thinkingSteps: newThinkingSteps
+                  };
+                }
+                
+                return newMessages;
+              });
+            }, (index + 1) * 800);
+          });
         }
       } catch (err) {
         console.error("Error processing message:", err);
@@ -953,46 +1045,93 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 className={`max-w-3/4 rounded-lg px-4 py-2 ${
                   message.role === "user"
                     ? "bg-farm-green-light text-farm-brown-dark"
+                    : message.isThinking
+                    ? "bg-farm-wood-light/80 text-farm-brown-dark"
                     : "bg-farm-earth-light text-farm-brown-dark"
                 } border border-farm-brown/10 shadow-sm`}
               >
-                <div className="markdown-content">
-                  <ReactMarkdown
-                    components={{
-                      code: ({
-                        node,
-                        inline,
-                        className,
-                        children,
-                        ...props
-                      }: {
-                        node?: any;
-                        inline?: boolean;
-                        className?: string;
-                        children: React.ReactNode;
-                        [key: string]: any;
-                      }) => {
-                        const match = /language-(\w+)/.exec(className || "");
-                        return !inline && match ? (
-                          <SyntaxHighlighter
-                            style={atomDark}
-                            language={match[1]}
-                            PreTag="div"
-                            {...props}
-                          >
-                            {String(children).replace(/\n$/, "")}
-                          </SyntaxHighlighter>
-                        ) : (
-                          <code className={className} {...props}>
-                            {children}
-                          </code>
-                        );
-                      },
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
-                </div>
+                {message.isThinking ? (
+                  <div className="thinking-message">
+                    <div className="flex items-center">
+                      <div className="animate-pulse mr-2">💭</div>
+                      <div className="font-medium">Thinking...</div>
+                    </div>
+                    
+                    {message.thinkingSteps && message.thinkingSteps.length > 0 && (
+                      <div className="mt-2 border-t border-farm-brown/10 pt-2">
+                        <div className="text-xs text-farm-brown mb-1">Processing steps:</div>
+                        <ul className="space-y-1">
+                          {message.thinkingSteps.map((step) => (
+                            <motion.li
+                              key={step.id}
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              transition={{ duration: 0.3 }}
+                              className="text-sm flex items-start"
+                            >
+                              <span className="text-farm-green mr-1">✓</span>
+                              <span>{step.step}</span>
+                            </motion.li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="markdown-content">
+                    <ReactMarkdown
+                      components={{
+                        code: ({
+                          node,
+                          inline,
+                          className,
+                          children,
+                          ...props
+                        }: {
+                          node?: any;
+                          inline?: boolean;
+                          className?: string;
+                          children: React.ReactNode;
+                          [key: string]: any;
+                        }) => {
+                          const match = /language-(\w+)/.exec(className || "");
+                          return !inline && match ? (
+                            <SyntaxHighlighter
+                              style={atomDark}
+                              language={match[1]}
+                              PreTag="div"
+                              {...props}
+                            >
+                              {String(children).replace(/\n$/, "")}
+                            </SyntaxHighlighter>
+                          ) : (
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          );
+                        },
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
+
+                {message.toolExecution && (
+                  <div className="mt-2 pt-2 border-t border-farm-brown/10">
+                    <div className="flex items-center text-xs text-farm-brown">
+                      <div className="mr-1">🔧</div>
+                      <div>
+                        <span className="font-medium">Tool used:</span> {message.toolExecution.toolName}
+                      </div>
+                    </div>
+                    {message.toolExecution.metrics.processingTime && (
+                      <div className="text-xs text-farm-brown mt-0.5">
+                        <span className="font-medium">Processing time:</span> {message.toolExecution.metrics.processingTime.toFixed(0)}ms
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Timestamp and metrics toggle */}
                 <div
@@ -1001,14 +1140,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <div
                     className={`${
                       message.role === "user"
-                        ? "text-farm-green-dark"
-                        : "text-farm-brown/70"
+                      ? "text-farm-green-dark"
+                      : "text-farm-brown/70"
                     }`}
                   >
                     {formatTime(message.timestamp)}
                   </div>
                   
-                  {message.role === "assistant" && message.toolExecution && (
+                  {message.role === "assistant" && message.toolExecution && !message.isThinking && (
                     <button
                       className="ml-2 text-farm-green flex items-center hover:text-farm-green-dark"
                       onClick={() => toggleMetrics(message.id)}
@@ -1034,17 +1173,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
                 
                 {/* Metrics display (if toggled) */}
-                {message.role === "assistant" &&
-                  message.toolExecution &&
-                  showMetrics[message.id] && (
-                    <div className="mt-2 pt-2 border-t border-farm-brown/10 text-xs text-farm-brown/80">
-                      {/* Metrics content here */}
-                      <div className="mb-1">
-                        <span className="font-medium">Tool:</span>{" "}
-                        {message.toolExecution.toolName}
-                      </div>
+                {message.role === "assistant" && message.toolExecution && showMetrics[message.id] && !message.isThinking && (
+                  <div className="mt-2 pt-2 border-t border-farm-brown/10 text-xs text-farm-brown/80">
+                    {/* Metrics content here */}
+                    <div className="mb-1">
+                      <span className="font-medium">Tool:</span>{" "}
+                      {message.toolExecution.toolName}
                     </div>
-                  )}
+                  </div>
+                )}
               </div>
             </div>
           ))
